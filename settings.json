@@ -1,0 +1,11 @@
+{
+  "deviceName": "大屏展示终端",
+  "autoRestart": true,
+  "restartInterval": "day",
+  "restartTime": "04:00",
+  "memoryLimitMb": 400,
+  "memoryWatchdog": true,
+  "autoRestore": true,
+  "autoRefresh": false,
+  "refreshInterval": 30
+}

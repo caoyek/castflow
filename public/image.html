@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图片展示</title>
+<style>
+  html, body {
+    margin: 0; height: 100%;
+    background: #000; overflow: hidden; cursor: none;
+  }
+  body { display: flex; align-items: center; justify-content: center; }
+  img { max-width: 100vw; max-height: 100vh; object-fit: contain; display: block; }
+</style>
+</head>
+<body>
+<img id="img" alt="">
+<script>
+  // 路径形如 /view/image/xxx.jpg，取出文件名回媒体目录拿原图
+  const name = decodeURIComponent(location.pathname.split('/').pop());
+  document.getElementById('img').src = '/media/' + encodeURIComponent(name);
+</script>
+</body>
+</html>

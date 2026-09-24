@@ -1,0 +1,42 @@
+{
+  "name": "castflow",
+  "version": "1.0.0",
+  "description": "轻量级局域网大屏投屏与无人值守控制系统 | Lightweight Big-Screen Kiosk & Digital Signage Controller powered by CDP",
+  "main": "main.js",
+  "bin": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "autostart": "node main.js --autostart",
+    "build": "powershell -ExecutionPolicy Bypass -File build.ps1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caoyek/castflow.git"
+  },
+  "keywords": [
+    "big-screen",
+    "kiosk",
+    "digital-signage",
+    "cdp",
+    "chrome-devtools-protocol",
+    "screencast",
+    "remote-control",
+    "dashboard",
+    "bi-screen"
+  ],
+  "author": "caoyek",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/caoyek/castflow/issues"
+  },
+  "homepage": "https://github.com/caoyek/castflow#readme",
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "pkg": {
+    "targets": [
+      "node22-win-x64"
+    ],
+    "outputPath": "dist"
+  }
+}

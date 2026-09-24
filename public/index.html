@@ -1,0 +1,1604 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CastFlow</title>
+<style>
+:root{
+  --bg:#090c11;--sidebar:#0c1016;--panel:#111720;--raised:#18212d;
+  --line:#273140;--line2:#344154;
+  --text:#f2f5fa;--muted:#7e8b9c;--faint:#65758a;
+  --blue:#5e9fe8;--blue-2:#3677d3;
+  --blue-soft:rgba(94,159,232,.09);--blue-line:rgba(94,159,232,.34);
+  --green:#72bc8f;--orange:#de9255;--red:#e97366;--warn:#d9a55f;
+  --shadow:0 20px 50px rgba(0,0,0,.28);
+  --r:16px;--r-sm:10px;--ctl:40px;
+  --font:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--text);font:13.5px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}button{cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+::selection{background:rgba(94,159,232,.3)}
+*{scrollbar-width:thin;scrollbar-color:#2b3646 transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#2b3646;border-radius:6px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#3a4757;background-clip:padding-box}
+
+/* ---------- 外壳 ---------- */
+.app{min-height:100vh;display:grid;grid-template-columns:230px minmax(0,1fr);
+  background:radial-gradient(900px 440px at 50% -10%,rgba(63,117,201,.13),transparent 62%),var(--bg)}
+
+/* ---------- 侧边栏 ---------- */
+.sidebar{height:100vh;position:sticky;top:0;padding:20px 15px;
+  border-right:1px solid rgba(255,255,255,.08);background:var(--sidebar);
+  display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:11px;height:44px;padding:0 9px;margin-bottom:24px}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(140deg,#6aa7ff,#685ff2);
+  display:grid;place-items:center;box-shadow:0 8px 24px rgba(80,120,240,.28);flex:none}
+.logo-mark svg{width:18px;height:18px}
+.logo-word{font-size:16px;font-weight:760;letter-spacing:-.015em;white-space:nowrap}
+.nav-label{padding:0 11px 8px;color:#4f5c6d;font-size:10px;letter-spacing:.12em}
+.nav{display:flex;flex-direction:column;gap:5px}
+.nav-btn{height:43px;border:0;border-radius:10px;background:transparent;color:#8c99aa;
+  display:flex;align-items:center;gap:11px;padding:0 12px;text-align:left;transition:background .15s,color .15s}
+.nav-btn svg{width:18px;height:18px;flex:none}
+.nav-btn:hover{background:#151c26;color:#e0e7ef}
+.nav-btn.active{background:#1b2b43;color:#7fb1f6}
+.nav-btn.active svg{filter:drop-shadow(0 0 6px rgba(94,159,232,.45))}
+
+.side-device{margin-top:auto;border:1px solid var(--line);border-radius:12px;padding:13px;background:#101620}
+.side-device-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dev-name{font-size:12px;color:#d4dce7;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.online{display:inline-flex;align-items:center;gap:6px;color:#87d3a5;font-size:11px;white-space:nowrap;flex:none}
+.online.off{color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;background:currentColor;box-shadow:0 0 9px currentColor}
+.memory-line{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:#687689;margin-top:11px}
+.memory-line span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mem-val{flex:none;font-variant-numeric:tabular-nums}
+.mem-val.warn{color:var(--warn)}.mem-val.bad{color:var(--red)}
+.memory{height:4px;background:#27303d;border-radius:4px;overflow:hidden;margin-top:7px}
+.memory i{display:block;width:0;height:100%;background:var(--blue);transition:width .35s,background .35s}
+.memory i.warn{background:var(--warn)}.memory i.bad{background:var(--red)}
+
+.proc-row{margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+.proc-state{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.proc-state.ok{color:var(--green)}.proc-state.bad{color:var(--red)}
+.proc-actions{display:flex;gap:5px;margin-top:9px}
+.proc-actions button{flex:1;min-width:0;height:26px;padding:0;
+  border:1px solid var(--line);border-radius:7px;background:#161d27;color:#9ba9b9;font-size:11px;transition:background .15s,border-color .15s,color .15s}
+.proc-actions button:hover:not(:disabled){background:#1d2734;border-color:var(--line2);color:#fff}
+.proc-actions button:disabled{opacity:.34;cursor:default}
+
+/* ---------- 工作区 ---------- */
+.workspace{min-width:0}
+.topbar{height:70px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:0 30px;border-bottom:1px solid rgba(255,255,255,.08);
+  background:rgba(9,12,17,.8);backdrop-filter:blur(16px);position:sticky;top:0;z-index:10}
+.title h1{font-size:18px;margin:0 0 3px;letter-spacing:-.01em}
+.title p{font-size:11px;color:var(--muted);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.title p[hidden]{display:none}
+
+/* ---------- 按钮 ---------- */
+.btn{height:var(--ctl);padding:0 14px;border:1px solid var(--line);border-radius:9px;
+  background:#151c26;color:#dce4ed;font-size:13px;white-space:nowrap;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .15s,border-color .15s,filter .15s}
+.btn svg{width:16px;height:16px;flex:none}
+.btn:hover{background:#1c2633;border-color:#40516a}
+.btn:disabled{opacity:.4;cursor:default}.btn:disabled:hover{background:#151c26;border-color:var(--line)}
+.btn.primary{background:linear-gradient(135deg,#639ff0,#3e7ed6);border-color:#5797e8;color:#fff;font-weight:700;
+  box-shadow:0 8px 24px rgba(55,120,214,.2)}
+.btn.primary:hover{filter:brightness(1.08)}.btn.primary:disabled:hover{filter:none}
+.btn.danger{background:#c9584c;border-color:#c9584c;color:#fff;font-weight:700}
+.btn.danger:hover{background:#d4614f;border-color:#d4614f}
+.btn.on{border-color:var(--blue);background:var(--blue-soft);color:#8ebcf4}
+.icon-btn{width:36px;height:36px;flex:none;border:1px solid var(--line);border-radius:9px;
+  background:#151c26;color:#9dacbd;display:grid;place-items:center;transition:background .15s,border-color .15s,color .15s}
+.icon-btn svg{width:16px;height:16px}
+.icon-btn:hover:not(:disabled){background:#1d2734;border-color:var(--line2);color:#fff}
+.icon-btn:disabled{opacity:.4;cursor:default}
+.small-btn{height:32px;padding:0 12px;border:1px solid var(--line);border-radius:8px;
+  background:#151c26;color:#b9c6d6;font-size:12px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  transition:background .15s,border-color .15s,color .15s}
+.small-btn:hover:not(:disabled){background:#1d2734;border-color:var(--line2);color:#fff}
+.small-btn:disabled{opacity:.4;cursor:default}
+.small-btn.on{border-color:var(--blue-line);background:var(--blue-soft);color:#8ebcf4}
+.small-btn svg{width:14px;height:14px}
+
+/* ---------- 内容区 ---------- */
+.content{padding:26px 30px 40px;max-width:1580px;margin:auto}
+.view{display:none}.view.active{display:block}
+
+/* ---------- 浏览器窗口（投放页） ---------- */
+.browser{border:1px solid #303a49;border-radius:15px;background:#11161e;overflow:hidden;box-shadow:var(--shadow)}
+.browser-top{height:48px;display:flex;align-items:center;padding:0 14px;
+  border-bottom:1px solid #2b3441;background:#171c24}
+.traffic{display:flex;gap:7px;margin-right:14px}
+.traffic i{width:10px;height:10px;border-radius:50%}
+.traffic i:nth-child(1){background:#ef6f68}
+.traffic i:nth-child(2){background:#e9b95e}
+.traffic i:nth-child(3){background:#6fc58b}
+.browser-name{font-size:12px;color:#8d99a8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.browser-status{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px;color:#82cfa0;flex:none}
+.browser-status.off{color:var(--red)}
+/* 高度跟着视口走。原来写死 min-height:560px，在 1366×768 这类屏上，
+   加上顶栏、内容边距和浏览器自身的工具栏会超出屏幕，整页被迫滚动。
+   212px = 顶栏70 + 内容上下边距66 + 浏览器标题栏48 + 余量28。 */
+.browser-body{display:grid;grid-template-columns:238px minmax(0,1fr);
+  height:clamp(360px,calc(100vh - 212px),820px);min-height:0}
+
+/* 标签侧栏 */
+.tab-sidebar{border-right:1px solid #2a3340;background:#0f141b;padding:12px 10px;display:flex;flex-direction:column;overflow-y:auto;min-height:0}
+.tabs-head{display:flex;align-items:center;justify-content:space-between;padding:4px 5px 10px;color:#768396;font-size:11px}
+.tabs-head button{width:28px;height:28px;border:1px solid #303b4a;border-radius:8px;background:#161d27;color:#9ba9b9;font-size:14px;display:grid;place-items:center;transition:background .15s,border-color .15s,color .15s}
+.tabs-head button:hover{background:#1d2734;border-color:#40516a;color:#fff}
+.tabs-head button.on{background:#1b2b43;border-color:var(--blue-line);color:#8ebcf4}
+.browser-tab{min-height:52px;border:0;border-radius:9px;background:transparent;color:#8996a6;
+  padding:8px;display:grid;grid-template-columns:28px minmax(0,1fr) 22px;align-items:center;gap:8px;
+  text-align:left;margin-bottom:4px;transition:background .15s}
+.browser-tab:hover{background:#171f2a}
+.browser-tab.active{background:#1d2d44;color:#e7edf4}
+.favicon{width:28px;height:28px;border-radius:7px;background:#24334a;display:grid;place-items:center;color:#75aaf0;font-size:10px;font-weight:700;flex:none}
+.tab-copy{min-width:0}
+.tab-copy b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;font-weight:620}
+.tab-copy span{display:block;margin-top:3px;color:#627186;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab-close{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#68768a;border:0;background:transparent;font-size:15px;flex:none}
+.tab-close:hover{background:#304159;color:#fff}
+.tabs-empty{margin-top:auto;padding:16px 13px;border:1px dashed #334052;border-radius:9px;color:#5f6e81;font-size:11px;text-align:center}
+
+/* Chrome 工具栏 + 地址栏 */
+.chrome-main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.chrome-toolbar{height:48px;display:flex;align-items:center;gap:6px;padding:0 12px;
+  border-bottom:1px solid #2b3441;background:#171c24}
+.chrome-icon{width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:#8d99a8;
+  font-size:15px;display:grid;place-items:center;flex:none;transition:background .15s,color .15s}
+.chrome-icon:hover:not(:disabled){background:#1d2734;color:#fff}
+.chrome-icon:disabled{opacity:.3;cursor:default}
+.chrome-icon svg{width:16px;height:16px}
+.address{flex:1;min-width:0;height:36px;border:1px solid #2d3949;border-radius:9px;
+  background:#090d13;color:#dce6f0;padding:0 13px;outline:none;transition:border-color .15s;font-size:12.5px}
+.address::placeholder{color:#5b6a7d}
+.address:focus{border-color:var(--blue)}
+.cast-btn{height:36px;min-width:72px;border:0;border-radius:9px;
+  background:linear-gradient(135deg,#639ff0,#3e7ed6);color:#fff;font-weight:700;font-size:12.5px;
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:none;transition:filter .15s}
+.cast-btn:hover{filter:brightness(1.08)}
+.cast-btn svg{width:14px;height:14px}
+
+/* Chrome 画布（截图区） */
+.chrome-canvas{flex:1;position:relative;background:#03060a;overflow:hidden;min-height:0}
+.chrome-canvas img{width:100%;height:100%;object-fit:contain;display:block}
+.chrome-canvas img[hidden]{display:none}
+.chrome-canvas.busy::after{content:"";position:absolute;top:0;left:-38%;width:38%;height:2px;
+  background:var(--blue);animation:slide 1s ease-in-out infinite}
+@keyframes slide{from{left:-38%}to{left:100%}}
+.canvas-state{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;color:#5d6f86;font-size:12.5px}
+.canvas-state[hidden]{display:none}
+.spinner{width:32px;height:32px;border-radius:50%;
+  border:2.5px solid rgba(94,159,232,.16);border-top-color:var(--blue);
+  animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.canvas-state svg{width:34px;height:34px;opacity:.7}
+
+/* 底部状态栏 */
+.browser-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:10px 14px;border-top:1px solid #2b3441;background:#171c24;font-size:11.5px;color:var(--faint)}
+.foot-url{display:flex;align-items:baseline;gap:7px;min-width:0}
+.foot-label{flex:none;white-space:nowrap}
+.foot-url b{font:500 11px/1.5 var(--mono);color:#a9b6c6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-actions{display:flex;align-items:center;gap:8px;flex:none}
+
+/* 缩放分段控件 */
+.zoom{display:flex;align-items:stretch;height:32px;background:#151c26;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.zoom button{display:inline-flex;align-items:center;justify-content:center;background:none;border:0;color:#9dacbd;font-size:13px;transition:background .15s,color .15s}
+.zoom button:hover:not(:disabled){background:#1d2734;color:#fff}
+.zoom button:disabled{opacity:.35;cursor:default}
+.zoom .step{width:28px}
+.zoom .val{width:52px;font-size:11.5px;color:#d9e2ec;font-variant-numeric:tabular-nums;
+  border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.zoom .val:hover:not(:disabled){color:var(--blue)}
+
+/* ---------- 内容库 ---------- */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.segmented{display:flex;gap:4px;padding:4px;border:1px solid var(--line);background:#0f141b;border-radius:10px;flex:none}
+.segmented button{height:31px;border:0;border-radius:7px;background:transparent;color:#7c8999;padding:0 12px;font-size:12px;transition:background .15s,color .15s}
+.segmented button.active{background:#23334a;color:#88b7f2}
+.segmented button:hover:not(.active){color:#a9b6c6}
+.search{height:42px;min-width:180px;flex:1;border:1px solid var(--line);border-radius:10px;
+  background:#101620;color:#dbe4ee;padding:0 14px;outline:none;transition:border-color .15s}
+.search::placeholder{color:#5b6a7d}
+.search:focus{border-color:var(--blue)}
+
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.asset{border:1px solid var(--line);border-radius:13px;background:#111720;overflow:hidden;transition:transform .2s,border-color .2s}
+.asset:hover{transform:translateY(-2px);border-color:#455873}
+.asset-preview{height:130px;background:#0a0e14;display:grid;place-items:center;position:relative;overflow:hidden}
+.asset-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.asset-preview .ph{color:#4d5f77}.asset-preview .ph svg{width:28px;height:28px}
+.asset-preview.web{background:linear-gradient(135deg,#15243a,#08101a)}
+.asset-preview.web .ph{color:#3a546f}
+.asset-preview.image{background:linear-gradient(135deg,#1a2330,#0d1318)}
+.asset-badge{position:absolute;top:8px;right:8px;padding:3px 7px;border-radius:6px;
+  background:rgba(9,12,17,.82);border:1px solid rgba(255,255,255,.1);font-size:10px;color:#c6d2e0}
+.asset-meta{padding:13px}
+.asset-meta b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.asset-meta span{display:block;color:#6f7e91;font-size:10px;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.asset-foot{display:flex;gap:7px;padding:0 13px 13px}
+.asset-foot .btn{height:33px;flex:1;font-size:11px;padding:0}
+.asset .del{position:absolute;top:8px;left:8px;width:26px;height:26px;display:grid;place-items:center;
+  border:1px solid rgba(255,255,255,.12);border-radius:7px;background:rgba(9,12,17,.82);color:#c6d2e0;
+  opacity:0;transition:opacity .15s,background .15s,border-color .15s,color .15s}
+.asset .del svg{width:13px;height:13px}
+.asset:hover .del,.asset .del:focus-visible{opacity:1}
+.asset .del:hover{background:rgba(233,115,102,.9);border-color:transparent;color:#fff}
+
+.add-card{border:1px dashed #3a485a;border-radius:13px;background:transparent;min-height:220px;
+  color:#7890ad;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:border-color .2s,color .2s}
+.add-card:hover{border-color:var(--blue-line);color:#8ebcf4}
+.add-card i{font-size:28px;font-style:normal}
+.add-card b{font-size:13px}
+
+/* ---------- 设备管理 ---------- */
+.device-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px}
+.device-list,.settings-card{border:1px solid var(--line);border-radius:14px;background:#111720}
+.card-title{height:58px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:0 17px;border-bottom:1px solid var(--line);font-size:14px;font-weight:700}
+.card-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ct-left{display:flex;align-items:center;gap:10px;min-width:0}
+.ct-left .online{font-weight:400}
+.device-list-body{padding:12px}
+.device-row{padding:14px;border:1px solid #3b526f;border-radius:11px;background:#18273a;margin-bottom:10px}
+.device-row-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.device-row h3{font-size:13px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.device-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.stat{padding:9px;border-radius:8px;background:#101823}
+.stat span{display:block;color:#637287;font-size:9px}
+.stat b{display:block;margin-top:4px;font-size:11px}
+.add-device{width:100%;height:44px;margin-top:6px;border:1px dashed #3a485a;border-radius:10px;
+  background:transparent;color:#7890ad;font-size:12px;transition:border-color .2s,color .2s}
+.add-device:hover{border-color:var(--blue-line);color:#8ebcf4}
+
+.settings-body{padding:20px}
+.setting-group{padding:17px 0;border-bottom:1px solid var(--line)}
+.setting-group:first-child{padding-top:0}
+.setting-group:last-child{border-bottom:0}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:22px}
+.setting-copy b{font-size:13px;font-weight:600}
+
+.toggle{width:44px;height:24px;border:0;border-radius:14px;background:#303a48;padding:3px;flex:none;transition:background .2s}
+.toggle i{display:block;width:18px;height:18px;border-radius:50%;background:#8a96a5;transition:transform .2s,background .2s}
+.toggle.on{background:#3479d3}
+.toggle.on i{transform:translateX(20px);background:#fff}
+
+.setting-controls{display:flex;align-items:center;gap:8px;margin-top:13px}
+.field{height:38px;border:1px solid var(--line2);border-radius:8px;background:#0c1118;color:#d9e2ec;padding:0 10px;outline:none;transition:border-color .15s}
+.field:focus{border-color:var(--blue)}
+.field.number{width:92px}.field.time{width:116px}
+.field.name{width:100%;max-width:280px}
+.unit{color:#7c899a;font-size:11px}
+.save-bar{display:flex;justify-content:flex-end;gap:8px;padding-top:20px}
+
+/* ---------- 空状态 ---------- */
+.empty{grid-column:1/-1;padding:44px 20px;text-align:center;border:1px dashed var(--line);
+  border-radius:14px;background:rgba(17,23,32,.5);font-size:12.5px;color:var(--faint)}
+
+/* ---------- 内容库小窗口（标签栏 ＋） ---------- */
+.lib-pop{position:fixed;z-index:55;display:flex;flex-direction:column;
+  border:1px solid var(--line2);border-radius:13px;background:#131a24;
+  box-shadow:0 24px 60px rgba(0,0,0,.55);overflow:hidden;animation:popIn .16s ease}
+.lib-pop[hidden]{display:none}
+@keyframes popIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.lib-pop-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 13px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700}
+.lib-pop-head button{width:26px;height:26px;border:0;border-radius:7px;background:transparent;
+  color:var(--muted);font-size:16px;display:grid;place-items:center;transition:background .15s,color .15s}
+.lib-pop-head button:hover{background:#1d2734;color:#fff}
+.lib-pop-link{display:flex;gap:7px;padding:11px 13px;border-bottom:1px solid var(--line)}
+.lib-pop-link input{flex:1;min-width:0;height:34px;border:1px solid var(--line2);border-radius:8px;
+  background:#0a0f16;color:#dbe4ee;padding:0 11px;outline:none;font-size:12px;transition:border-color .15s}
+.lib-pop-link input::placeholder{color:#5b6a7d}
+.lib-pop-link input:focus{border-color:var(--blue)}
+.lib-pop-link button{height:34px;padding:0 13px;border:0;border-radius:8px;
+  background:linear-gradient(135deg,#639ff0,#3e7ed6);color:#fff;font-weight:700;font-size:12px;flex:none}
+.lib-pop-link button:hover{filter:brightness(1.08)}
+.lib-pop-list{overflow-y:auto;padding:7px;min-height:74px;flex:1}
+.lib-pop-item{width:100%;display:flex;align-items:center;gap:10px;padding:7px;
+  border:0;border-radius:9px;background:transparent;color:#c8d3e0;text-align:left;transition:background .15s}
+.lib-pop-item:hover{background:#1a2330}
+.lib-pop-thumb{width:40px;height:30px;border-radius:6px;background:#0d131b;border:1px solid var(--line);
+  display:grid;place-items:center;color:#5d7086;flex:none;overflow:hidden}
+.lib-pop-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.lib-pop-thumb svg{width:14px;height:14px}
+.lib-pop-copy{min-width:0;flex:1}
+.lib-pop-copy b{display:block;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib-pop-copy span{display:block;font-size:10px;color:#6b7a8d;margin-top:2px}
+.lib-pop-empty{padding:22px 10px;text-align:center;font-size:11.5px;color:#5d6f86}
+.lib-pop-foot{display:flex;gap:7px;padding:10px 13px;border-top:1px solid var(--line);background:#0e141c}
+.lib-pop-foot button{flex:1;height:32px;border:1px solid var(--line);border-radius:8px;
+  background:#151c26;color:#b9c6d6;font-size:11.5px;transition:background .15s,border-color .15s,color .15s}
+.lib-pop-foot button:hover{background:#1d2734;border-color:var(--line2);color:#fff}
+
+/* ---------- 页内弹窗 ---------- */
+.modal-root{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px}
+.modal-root[hidden]{display:none}
+.modal-mask{position:absolute;inset:0;background:rgba(4,7,11,.72);backdrop-filter:blur(3px)}
+.modal{position:relative;width:min(440px,100%);max-height:calc(100vh - 40px);display:flex;flex-direction:column;
+  border:1px solid var(--line2);border-radius:16px;background:var(--panel);
+  box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;animation:modalIn .18s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px 18px;border-bottom:1px solid var(--line)}
+.modal-head h3{margin:0;font-size:14px;font-weight:700}
+.modal-x{width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:var(--muted);
+  font-size:18px;display:grid;place-items:center;transition:background .15s,color .15s}
+.modal-x:hover{background:#1d2734;color:#fff}
+.modal-body{padding:18px;font-size:13px;line-height:1.7;color:#c3cfdd;overflow-y:auto}
+.modal-text{margin:0;white-space:pre-line}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;
+  border-top:1px solid var(--line);background:#0e141c}
+.form{display:flex;flex-direction:column;gap:13px}
+.form-row{display:flex;flex-direction:column;gap:6px}
+.form-row>span{font-size:11.5px;color:var(--muted)}
+.form-row .field{width:100%}
+
+/* ---------- 拖拽遮罩 ---------- */
+#drop{position:fixed;inset:16px;z-index:40;display:none;align-items:center;justify-content:center;
+  background:rgba(9,12,17,.93);border:2px dashed var(--blue-line);border-radius:18px;
+  color:#8ebcf4;font-size:15px;font-weight:600;pointer-events:none}
+#drop.on{display:flex}
+
+/* ---------- 提示 ---------- */
+#toast{position:fixed;left:50%;bottom:24px;z-index:70;transform:translate(-50%,18px);
+  max-width:min(560px,calc(100vw - 40px));padding:11px 16px;border-radius:10px;
+  background:var(--raised);border:1px solid var(--line2);border-left:3px solid var(--line2);
+  font-size:12.5px;color:var(--text);box-shadow:0 14px 40px rgba(0,0,0,.35);
+  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.ok{border-left-color:var(--green)}
+#toast.bad{border-left-color:var(--red)}
+
+/* ---------- 窄屏设备条 ---------- */
+.device-inline{display:none;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;margin-bottom:14px;border:1px solid var(--line);border-radius:12px;background:#111721}
+.device-inline .di-left{display:flex;align-items:center;gap:10px;min-width:0;font-size:12px}
+.device-inline .di-right{display:flex;gap:5px;flex:none}
+.device-inline .di-right button{height:28px;padding:0 11px;border:1px solid var(--line);border-radius:7px;background:#151c26;color:#9dacbd;font-size:11px}
+.device-inline .di-right button:hover:not(:disabled){background:#1d2734;border-color:var(--line2);color:#fff}
+.device-inline .di-right button:disabled{opacity:.34;cursor:default}
+
+.mobile-nav{display:none}
+
+@media(max-width:1100px){
+  .app{grid-template-columns:78px minmax(0,1fr)}
+  .sidebar{padding:18px 12px}
+  .logo{justify-content:center;padding:0}
+  .logo-word,.nav-label,.nav-btn span,.side-device{display:none}
+  .nav-btn{justify-content:center;padding:0}
+  .browser-body{grid-template-columns:200px minmax(0,1fr)}
+  .asset-grid{grid-template-columns:repeat(3,1fr)}
+  .content{padding:22px 20px 36px}
+  .device-inline{display:flex}
+}
+@media(max-width:760px){
+  .app{display:block}
+  .sidebar{display:none}
+  .topbar{height:62px;padding:0 14px}
+  .title h1{font-size:16px}
+  .content{padding:14px 10px 80px}
+  .browser-body{display:block;height:auto;min-height:0}
+  .tab-sidebar{border-right:0;border-bottom:1px solid var(--line);padding:8px;display:flex;flex-direction:row;overflow-x:auto;gap:5px;max-height:none}
+  .tabs-head{display:flex;flex-direction:row;align-items:center;padding:0 4px 0 0;gap:6px;flex:none}
+  .tabs-head>span{display:none}
+  .tabs-empty{display:none}
+  .browser-tab{min-width:180px;margin:0}
+  .chrome-toolbar{height:52px;padding:0 8px;gap:4px}
+  .address{height:36px}
+  .cast-btn{height:36px;min-width:62px}
+  .chrome-canvas{min-height:300px}
+  .asset-grid{grid-template-columns:1fr 1fr;gap:9px}
+  .asset-preview{height:105px}
+  .device-layout{display:block}
+  .device-list{margin-bottom:14px}
+  .library-tools,.toolbar{gap:8px}
+  .toolbar .btn{width:42px;padding:0;flex:none}
+  .toolbar .btn span{display:none}
+  .search{min-width:100%;order:3}
+  .segmented{overflow-x:auto}
+  .modal-root{padding:12px;align-items:end}
+  .modal{width:100%;border-radius:16px 16px 0 0}
+  .mobile-nav{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;
+    height:64px;border-top:1px solid var(--line);background:rgba(12,16,22,.96);backdrop-filter:blur(16px);z-index:20}
+  .mobile-nav button{border:0;background:none;color:#6f7e91;font-size:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+  .mobile-nav button.active{color:#7fb1f6}
+  .mobile-nav svg{width:17px;height:17px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= 侧边栏 ================= -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 17 9 12l4 4 7-8"/><path d="M15 8h5v5"/></svg>
+      </div>
+      <span class="logo-word">CastFlow</span>
+    </div>
+    <div class="nav-label">控制台</div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="cast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
+        <span>投放</span>
+      </button>
+      <button class="nav-btn" data-view="library">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg>
+        <span>内容库</span>
+      </button>
+      <button class="nav-btn" data-view="devices">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M9 21h6M12 18v3"/></svg>
+        <span>设备管理</span>
+      </button>
+    </nav>
+    <div class="side-device">
+      <div class="side-device-head">
+        <span class="dev-name" id="devNameSide">大屏设备</span>
+        <span class="online" id="devState"><i class="dot"></i>连接中</span>
+      </div>
+      <div class="memory-line">
+        <span>页面 JS</span>
+        <span class="mem-val" id="devMem">—</span>
+      </div>
+      <div class="memory"><i id="memBar"></i></div>
+      <div class="memory-line">
+        <span>Chrome</span>
+        <span class="mem-val" id="devChrome">—</span>
+      </div>
+      <div class="memory-line">
+        <span>整机</span>
+        <span class="mem-val" id="devSys">—</span>
+      </div>
+      <div class="proc-row">
+        <span class="proc-state" id="procChip"><i class="dot"></i>状态未知</span>
+        <div class="proc-actions">
+          <button id="procStart">启动</button>
+          <button id="procRestart">重启</button>
+          <button id="procStop">关闭</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= 工作区 ================= -->
+  <div class="workspace">
+    <header class="topbar">
+      <div class="title">
+        <h1 id="pageTitle">投放</h1>
+        <p id="pageSub">大屏设备</p>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ---------- 投放（浏览器窗口形态） ---------- -->
+      <section class="view active" id="view-cast">
+        <div class="device-inline">
+          <div class="di-left">
+            <span class="online" id="devState2"><i class="dot"></i>连接中</span>
+            <span id="stateText2">—</span>
+          </div>
+          <div class="di-right">
+            <button id="procStart2">启动</button>
+            <button id="procRestart2">重启</button>
+            <button id="procStop2">关闭</button>
+          </div>
+        </div>
+
+        <div class="browser">
+          <div class="browser-top">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <span class="browser-name" id="browserName">大屏设备</span>
+            <span class="browser-status" id="browserStatus"><i class="dot"></i>连接中</span>
+          </div>
+          <div class="browser-body">
+            <aside class="tab-sidebar">
+              <div class="tabs-head">
+                <span>标签页</span>
+                <button id="newTabBtn" title="添加内容">＋</button>
+              </div>
+              <div id="tabList"></div>
+              <div class="tabs-empty" id="tabsEmpty">无标签页</div>
+            </aside>
+
+            <div class="chrome-main">
+              <div class="chrome-toolbar">
+                <button class="chrome-icon" id="refreshBtn" title="刷新">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2 5.3M20 4v7h-7"/></svg>
+                </button>
+                <input class="address" id="address" placeholder="输入网址后按回车投放" spellcheck="false">
+                <button class="cast-btn" id="castBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                  投放
+                </button>
+              </div>
+              <div class="chrome-canvas" id="shotFrame">
+                <img id="shot" alt="" hidden>
+                <div class="canvas-state" id="canvasLoad">
+                  <span class="spinner"></span>
+                  <span id="canvasLoadText">正在获取画面</span>
+                </div>
+                <div class="canvas-state" id="canvasMsg" hidden>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 11h8"/></svg>
+                  <span id="canvasMsgText">画面不可用</span>
+                </div>
+              </div>
+              <div class="browser-foot">
+                <span class="foot-url"><span class="foot-label">大屏当前</span><b id="nowText">—</b></span>
+                <div class="preview-actions">
+                  <button class="small-btn" id="fReload" title="重载">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2 5.3M20 4v7h-7"/></svg>
+                    重载
+                  </button>
+                  <button class="small-btn" id="fTop" title="置顶">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20V8"/><path d="m7 13 5-5 5 5"/><path d="M5 4h14"/></svg>
+                    置顶
+                  </button>
+                  <button class="small-btn" id="fFull" title="全屏">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5m13-5h5v5M8 21H3v-5m13 5h5v-5"/></svg>
+                    全屏
+                  </button>
+                  <div class="zoom">
+                    <button class="step" id="zoomOut" title="缩小" aria-label="缩小">−</button>
+                    <button class="val" id="zoomVal" title="恢复 100%">100%</button>
+                    <button class="step" id="zoomIn" title="放大" aria-label="放大">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- 内容库 ---------- -->
+      <section class="view" id="view-library">
+        <div class="toolbar">
+          <div class="segmented" id="filterTabs">
+            <button class="active" data-filter="all">全部</button>
+            <button data-filter="web">网页</button>
+            <button data-filter="image">图片</button>
+            <button data-filter="starred">已收藏</button>
+          </div>
+          <input class="search" id="libSearch" placeholder="搜索名称或网址">
+          <button class="btn" id="addWebBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>
+            <span>添加网页</span>
+          </button>
+          <button class="btn primary" id="addMediaBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>上传图片</span>
+          </button>
+        </div>
+        <div class="asset-grid" id="libGrid"></div>
+      </section>
+
+      <!-- ---------- 设备管理 ---------- -->
+      <section class="view" id="view-devices">
+        <div class="device-layout">
+          <div class="device-list">
+            <div class="card-title">
+              <span class="ct-left">设备列表 <span class="online" id="devCount"><i class="dot"></i>1 台在线</span></span>
+            </div>
+            <div class="device-list-body">
+              <article class="device-row">
+                <div class="device-row-top">
+                  <h3 id="devRowName">大屏设备</h3>
+                  <span class="online" id="devRowState"><i class="dot"></i>在线</span>
+                </div>
+                <div class="device-stats">
+                  <div class="stat"><span>当前标签</span><b id="devRowTabs">— 个</b></div>
+                  <div class="stat"><span>内存占用</span><b id="devRowMem">— / — MB</b></div>
+                </div>
+              </article>
+              <button class="add-device" id="addDeviceBtn">＋ 添加另一台设备</button>
+            </div>
+          </div>
+          <div class="settings-card">
+            <div class="card-title">
+              <span id="settingsTitle">浏览器设置</span>
+              <button class="btn" id="restartNowBtn" style="height:34px">立即重启</button>
+            </div>
+            <div class="settings-body" id="settingsBody"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- 内容库小窗口（标签栏 ＋） -->
+<div class="lib-pop" id="libPop" hidden>
+  <div class="lib-pop-head">
+    <span>添加内容</span>
+    <button id="libPopClose" title="关闭">×</button>
+  </div>
+  <div class="lib-pop-link">
+    <input id="libPopUrl" placeholder="粘贴网址" spellcheck="false">
+    <button id="libPopGo">投放</button>
+  </div>
+  <div class="lib-pop-list" id="libPopList"></div>
+  <div class="lib-pop-foot">
+    <button id="libPopUpload">上传图片</button>
+    <button id="libPopAll">打开内容库</button>
+  </div>
+</div>
+
+<!-- 页内弹窗 -->
+<div class="modal-root" id="modalRoot" hidden>
+  <div class="modal-mask"></div>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h3 id="modalTitle"></h3>
+      <button class="modal-x" id="modalX" title="关闭">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<nav class="mobile-nav">
+  <button class="active" data-view="cast">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/></svg>投放
+  </button>
+  <button data-view="library">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg>内容库
+  </button>
+  <button data-view="devices">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="13" rx="2"/></svg>设备
+  </button>
+</nav>
+
+<div id="drop">松手即上传</div>
+<div id="toast"></div>
+<input type="file" id="fileInput" accept="image/*,video/*" multiple hidden>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// 内存读数统一格式化：过 1GB 就换单位，免得出现 "1024 MB" 这种
+const fmtMb = (mb) => (mb >= 1024 ? (mb / 1024).toFixed(1) + ' GB' : Math.round(mb) + ' MB');
+
+/* ---------- 图标 ---------- */
+const SVG = {
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>',
+  image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m4 17 5-5 4 4 2-2 5 4"/></svg>',
+  video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>',
+};
+
+/* ---------- 反馈 ---------- */
+let toastTimer = null;
+function toast(text, kind) {
+  const el = $('toast');
+  el.textContent = text;
+  el.className = 'on' + (kind ? ' ' + kind : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, kind === 'bad' ? 5200 : 2600);
+}
+
+async function api(path, options) {
+  const r = await fetch(path, options);
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+  return d;
+}
+
+async function busy(btn, fn) {
+  if (btn?.disabled) return;
+  if (btn) btn.disabled = true;
+  try { await fn(); } finally { if (btn) btn.disabled = false; }
+}
+
+/* ============================================================
+   页内弹窗
+   ============================================================ */
+const modalRoot = $('modalRoot');
+let modalOnClose = null;
+
+function closeModal(value) {
+  if (modalRoot.hidden) return;
+  modalRoot.hidden = true;
+  $('modalBody').textContent = '';
+  const cb = modalOnClose;
+  modalOnClose = null;
+  if (cb) cb(value);
+}
+
+function openModal({ title, body, foot, onClose }) {
+  $('modalTitle').textContent = title || '';
+  const bodyEl = $('modalBody');
+  bodyEl.textContent = '';
+  if (typeof body === 'string') bodyEl.innerHTML = body;
+  else if (body) bodyEl.appendChild(body);
+
+  const footEl = $('modalFoot');
+  footEl.textContent = '';
+  for (const a of (foot || [])) {
+    const b = document.createElement('button');
+    b.className = 'btn' + (a.primary ? ' primary' : '') + (a.danger ? ' danger' : '');
+    b.textContent = a.label;
+    b.onclick = () => a.onClick && a.onClick();
+    footEl.appendChild(b);
+  }
+
+  modalOnClose = onClose || null;
+  modalRoot.hidden = false;
+  const first = bodyEl.querySelector('input,select,textarea');
+  if (first) setTimeout(() => { first.focus(); first.select?.(); }, 40);
+}
+
+$('modalX').onclick = () => closeModal(undefined);
+modalRoot.querySelector('.modal-mask').onclick = () => closeModal(undefined);
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!$('libPop').hidden) { closeLibPop(); return; }
+  if (!modalRoot.hidden) closeModal(undefined);
+});
+
+function uiConfirm(message, { title = '确认操作', ok = '确定', danger = false } = {}) {
+  return new Promise((resolve) => {
+    openModal({
+      title,
+      body: '<p class="modal-text"></p>',
+      foot: [
+        { label: '取消', onClick: () => closeModal(false) },
+        { label: ok, primary: !danger, danger, onClick: () => closeModal(true) },
+      ],
+      onClose: (v) => resolve(v === true),
+    });
+    $('modalBody').querySelector('.modal-text').textContent = message;
+  });
+}
+
+function openForm({ title, fields, ok = '确定', onOk }) {
+  const wrap = document.createElement('div');
+  wrap.className = 'form';
+  for (const f of fields) {
+    const row = document.createElement('label');
+    row.className = 'form-row';
+    const lb = document.createElement('span');
+    lb.textContent = f.label;
+    const inp = document.createElement('input');
+    inp.className = 'field';
+    inp.type = f.type || 'text';
+    inp.placeholder = f.placeholder || '';
+    inp.value = f.value || '';
+    inp.dataset.name = f.name;
+    row.append(lb, inp);
+    wrap.appendChild(row);
+  }
+  const submit = () => {
+    const out = {};
+    for (const inp of wrap.querySelectorAll('input')) out[inp.dataset.name] = inp.value.trim();
+    const miss = fields.find((f) => f.required && !out[f.name]);
+    if (miss) return toast(miss.label + '不能为空', 'bad');
+    onOk(out, () => closeModal());
+  };
+  openModal({
+    title,
+    body: wrap,
+    foot: [
+      { label: '取消', onClick: () => closeModal() },
+      { label: ok, primary: true, onClick: submit },
+    ],
+  });
+  wrap.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); submit(); }
+  });
+}
+
+/* ---------- 视图切换 ---------- */
+const TITLES = { cast: '投放', library: '内容库', devices: '设备管理' };
+let currentDeviceName = '大屏设备';
+
+function showView(v) {
+  for (const x of document.querySelectorAll('.view')) x.classList.toggle('active', x.id === 'view-' + v);
+  for (const x of document.querySelectorAll('[data-view]')) x.classList.toggle('active', x.dataset.view === v);
+  $('pageTitle').textContent = TITLES[v];
+  $('pageSub').hidden = v !== 'cast';
+  closeLibPop();
+  if (v === 'cast') { refreshStatus(); refreshShot(); refreshTabs(); startShotTimer(); }
+  else { stopShotTimer(); }
+  if (v === 'library') refreshLibrary();
+  else if (v === 'devices') refreshDevices();
+  window.scrollTo({ top: 0 });
+}
+
+for (const b of document.querySelectorAll('[data-view]')) b.onclick = () => showView(b.dataset.view);
+
+/* ---------- 设备名 ---------- */
+function applyDeviceName(name) {
+  if (name) currentDeviceName = name;
+  const n = currentDeviceName;
+  $('pageSub').textContent = n;
+  $('devNameSide').textContent = n;
+  $('browserName').textContent = n;
+  $('devRowName').textContent = n;
+  $('settingsTitle').textContent = n + ' · 浏览器设置';
+  document.title = 'CastFlow · ' + n;
+}
+
+/* ---------- 投放 ---------- */
+async function push(url, mode) {
+  const run = async () => {
+    try {
+      const d = await api('/api/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, mode }),
+      });
+      toast((mode === 'tab' ? '已切换' : '已投放') + ' · ' + d.ms + ' ms', 'ok');
+      refreshStatus();
+      refreshTabs();
+      setTimeout(refreshShot, 600);
+    } catch (err) {
+      toast('投放失败：' + err.message, 'bad');
+    }
+  };
+  if (mode === 'tab') await run();
+  else await busy($('castBtn'), run);
+}
+
+$('castBtn').onclick = () => {
+  const url = $('address').value.trim();
+  if (!url) return toast('先填个网址', 'bad');
+  push(url);
+};
+$('address').onkeydown = (e) => { if (e.key === 'Enter') $('castBtn').click(); };
+$('refreshBtn').onclick = () => busy($('refreshBtn'), async () => {
+  toast('刷新中…');
+  try { await api('/api/reload', { method: 'POST' }); toast('已刷新', 'ok'); refreshStatus(); setTimeout(refreshShot, 800); }
+  catch (err) { toast('刷新失败：' + err.message, 'bad'); }
+});
+
+/* ---------- 状态 ---------- */
+let isFullscreen = null;
+let isTopmost = null;
+let currentZoom = 1;
+const ZOOM_STEPS = [0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
+
+function syncViewButtons() {
+  const fTop = $('fTop'), fFull = $('fFull');
+  if (fTop) fTop.classList.toggle('on', isTopmost === true);
+  if (fFull) fFull.classList.toggle('on', isFullscreen === true);
+}
+function syncZoom() { $('zoomVal').textContent = Math.round(currentZoom * 100) + '%'; }
+
+function paintDevice(online, text) {
+  for (const id of ['devState', 'devState2']) {
+    const el = $(id);
+    if (!el) continue;
+    el.className = 'online' + (online ? '' : ' off');
+    el.innerHTML = '<i class="dot"></i>' + text;
+  }
+}
+
+async function refreshStatus() {
+  let d;
+  try {
+    d = await (await fetch('/api/status')).json();
+  } catch (err) {
+    paintDevice(false, '离线');
+    $('browserStatus').className = 'browser-status off';
+    $('browserStatus').innerHTML = '<i class="dot"></i>未连接';
+    $('nowText').textContent = err.message;
+    return;
+  }
+  const on = !!d.online;
+  paintDevice(on, on ? '在线' : '离线');
+
+  const bs = $('browserStatus');
+  bs.className = 'browser-status' + (on ? '' : ' off');
+  bs.innerHTML = '<i class="dot"></i>' + (on ? '已连接' : '未连接');
+
+  if ($('stateText2')) {
+    $('stateText2').textContent = on ? (d.pageCount + ' 个标签页') : '—';
+  }
+
+  const bar = $('memBar'), memVal = $('devMem');
+  if (on && d.heapMb != null) {
+    const ratio = d.heapMb / d.memoryLimitMb;
+    bar.style.width = Math.min(100, ratio * 100).toFixed(1) + '%';
+    bar.className = ratio > .9 ? 'bad' : ratio > .7 ? 'warn' : '';
+    memVal.textContent = d.heapMb + '/' + d.memoryLimitMb + ' MB';
+    memVal.className = 'mem-val' + (ratio > .9 ? ' bad' : ratio > .7 ? ' warn' : '');
+  } else {
+    bar.style.width = '0'; bar.className = '';
+    memVal.textContent = '—'; memVal.className = 'mem-val';
+  }
+
+  // 这两个只用于展示，不参与阈值判断
+  if ($('devChrome')) {
+    $('devChrome').textContent = on && d.chromeMb != null ? fmtMb(d.chromeMb) : '—';
+  }
+  if ($('devSys')) {
+    $('devSys').textContent = on && d.sysTotalMb
+      ? fmtMb(d.sysUsedMb) + ' / ' + fmtMb(d.sysTotalMb)
+      : '—';
+  }
+
+  $('nowText').textContent = on ? (d.url || '—') : (d.error || '—');
+  $('nowText').title = on ? (d.url || '') : '';
+  if (on && d.url) $('address').value = d.url;
+
+  if ($('devRowMem')) {
+    $('devRowMem').textContent = on && d.heapMb != null ? d.heapMb + ' / ' + d.memoryLimitMb + ' MB' : '— / — MB';
+    $('devRowTabs').textContent = on ? (d.pageCount + ' 个') : '— 个';
+    $('devRowState').className = 'online' + (on ? '' : ' off');
+    $('devRowState').innerHTML = '<i class="dot"></i>' + (on ? '在线' : '离线');
+    $('devCount').innerHTML = '<i class="dot"></i>' + (on ? '1 台在线' : '0 台在线');
+    $('devCount').className = 'online' + (on ? '' : ' off');
+  }
+
+  if (on && typeof d.fullscreen === 'boolean') { isFullscreen = d.fullscreen; syncViewButtons(); }
+  if (on && typeof d.zoom === 'number') { currentZoom = d.zoom; syncZoom(); }
+}
+
+/* ---------- 显示控制 ---------- */
+async function toggleFullscreen() {
+  await busy($('fFull'), async () => {
+    const want = !isFullscreen;
+    try {
+      const d = await api('/api/fullscreen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: want }) });
+      isFullscreen = d.fullscreen;
+      toast(want ? '已全屏' : '已退出全屏', 'ok');
+    } catch (err) { toast('全屏切换失败：' + err.message, 'bad'); }
+    finally { syncViewButtons(); }
+  });
+}
+
+async function refreshTopmost() {
+  try { const d = await api('/api/topmost'); isTopmost = typeof d.topmost === 'boolean' ? d.topmost : null; }
+  catch { isTopmost = null; }
+  syncViewButtons();
+}
+async function setTopmost(on) {
+  const d = await api('/api/topmost', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on }) });
+  isTopmost = d.topmost; syncViewButtons(); return isTopmost;
+}
+async function toggleTopmost() {
+  await busy($('fTop'), async () => {
+    const want = isTopmost !== true;
+    try { await setTopmost(want); toast(want ? '已置顶' : '已取消置顶', 'ok'); }
+    catch (err) { toast('置顶切换失败：' + err.message, 'bad'); }
+  });
+}
+
+/* ---------- 进程控制 ---------- */
+let procRunning = null;
+function syncProcButtons() {
+  const running = procRunning === true;
+  const label = procRunning === null ? '状态未知' : running ? '运行中' : '未运行';
+  const chip = $('procChip');
+  chip.className = 'proc-state' + (procRunning === null ? '' : running ? ' ok' : ' bad');
+  chip.innerHTML = '<i class="dot"></i>' + label;
+  for (const id of ['procStart', 'procStart2']) $(id).disabled = running;
+  for (const id of ['procStop', 'procStop2']) $(id).disabled = !running;
+}
+async function refreshProcState() {
+  try { const d = await api('/api/chrome'); procRunning = !!d.running; }
+  catch { procRunning = null; }
+  syncProcButtons();
+}
+async function procAction(btn, path, label) {
+  await busy(btn, async () => {
+    toast(label + '中…');
+    try {
+      const d = await api(path, { method: 'POST' });
+      procRunning = !!d.running;
+      syncProcButtons();
+      if (path.endsWith('/stop')) resetShot();
+      toast(label + '完成', 'ok');
+      refreshStatus(); refreshTabs();
+      setTimeout(refreshShot, 1200);
+      setTimeout(refreshTopmost, 1500);
+    } catch (err) { toast(label + '失败：' + err.message, 'bad'); refreshProcState(); }
+  });
+}
+
+/* ---------- 缩放 ---------- */
+async function setZoom(z) {
+  const inBtn = $('zoomIn'), outBtn = $('zoomOut');
+  inBtn.disabled = outBtn.disabled = true;
+  try {
+    const d = await api('/api/zoom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ zoom: z }) });
+    currentZoom = d.zoom; toast('缩放 ' + Math.round(d.zoom * 100) + '%', 'ok');
+  } catch (err) { toast('缩放失败：' + err.message, 'bad'); }
+  finally { inBtn.disabled = outBtn.disabled = false; syncZoom(); }
+}
+function stepZoom(dir) {
+  let next;
+  if (dir > 0) { const up = ZOOM_STEPS.find((v) => v > currentZoom + 1e-3); next = up ?? ZOOM_STEPS[ZOOM_STEPS.length - 1]; }
+  else { const down = ZOOM_STEPS.filter((v) => v < currentZoom - 1e-3); next = down.length ? down[down.length - 1] : ZOOM_STEPS[0]; }
+  if (next !== currentZoom) setZoom(next);
+}
+
+/* ---------- 截图（带加载态，避免破图） ---------- */
+let shotHasImage = false;
+let shotTimer = null;
+
+function startShotTimer() {
+  stopShotTimer();
+  shotTimer = setInterval(refreshShot, 5000);
+}
+function stopShotTimer() {
+  if (shotTimer) { clearInterval(shotTimer); shotTimer = null; }
+}
+
+function resetShot() {
+  shotHasImage = false;
+  const img = $('shot');
+  img.hidden = true;
+  img.removeAttribute('src');
+  if (img.dataset.blob) { URL.revokeObjectURL(img.dataset.blob); delete img.dataset.blob; }
+  $('canvasMsg').hidden = true;
+  $('canvasLoad').hidden = false;
+  $('canvasLoadText').textContent = '正在获取画面';
+}
+
+async function refreshShot() {
+  const img = $('shot'), load = $('canvasLoad'), msg = $('canvasMsg'), frame = $('shotFrame');
+
+  if (!shotHasImage) {
+    load.hidden = false;
+    msg.hidden = true;
+    $('canvasLoadText').textContent = '正在获取画面';
+  } else {
+    // 已经有画面时不闪加载层，用顶部细进度条示意
+    frame.classList.add('busy');
+  }
+
+  try {
+    const r = await fetch('/api/shot', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+
+    // 先在内存里解码完，确认不是坏图再换上去
+    await new Promise((res, rej) => {
+      const probe = new Image();
+      probe.onload = () => res();
+      probe.onerror = () => rej(new Error('画面解码失败'));
+      probe.src = url;
+    });
+
+    const old = img.dataset.blob;
+    img.src = url;
+    img.dataset.blob = url;
+    img.hidden = false;
+    if (old && old !== url) URL.revokeObjectURL(old);
+
+    shotHasImage = true;
+    load.hidden = true;
+    msg.hidden = true;
+  } catch (err) {
+    if (shotHasImage) {
+      toast('画面刷新失败：' + err.message, 'bad');
+    } else {
+      load.hidden = true;
+      msg.hidden = false;
+      $('canvasMsgText').textContent = err.message;
+    }
+  } finally {
+    frame.classList.remove('busy');
+  }
+}
+
+/* ---------- 标签页 ---------- */
+async function refreshTabs() {
+  const box = $('tabList');
+  let items;
+  try { items = await (await fetch('/api/tabs')).json(); }
+  catch {
+    box.textContent = '';
+    $('tabsEmpty').style.display = 'block';
+    $('tabsEmpty').textContent = '读取失败';
+    return;
+  }
+  box.textContent = '';
+  if (!items.length) {
+    $('tabsEmpty').style.display = 'block';
+    $('tabsEmpty').textContent = '无标签页';
+    return;
+  }
+  $('tabsEmpty').style.display = 'none';
+
+  for (const t of items) {
+    const el = document.createElement('button');
+    el.className = 'browser-tab' + (t.active ? ' active' : '');
+    el.dataset.id = t.id;
+
+    let abbrev = '●';
+    try { const u = new URL(t.url); abbrev = (u.hostname[0] || '●').toUpperCase(); } catch {}
+
+    el.innerHTML =
+      '<span class="favicon">' + abbrev + '</span>'
+      + '<span class="tab-copy"><b></b><span></span></span>'
+      + '<span class="tab-close" title="关闭">×</span>';
+    el.querySelector('b').textContent = t.title || t.url || '(无标题)';
+    el.querySelector('.tab-copy span').textContent = t.url || '';
+
+    if (!t.active) el.onclick = () => switchTab(t.id);
+    el.querySelector('.tab-close').onclick = (e) => {
+      e.stopPropagation();
+      closeTab(t.id, t.title || t.url || '无标题');
+    };
+    box.appendChild(el);
+  }
+}
+
+async function switchTab(id) {
+  try {
+    const d = await api('/api/tab', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetId: id }) });
+    toast('已切换 · ' + (d.title || d.url), 'ok');
+    refreshTabs(); refreshStatus();
+    setTimeout(refreshShot, 500);
+  } catch (err) { toast('切换失败：' + err.message, 'bad'); }
+}
+
+async function closeTab(id, label) {
+  const yes = await uiConfirm('关闭「' + label + '」？', { title: '关闭标签页', ok: '关闭', danger: true });
+  if (!yes) return;
+  try {
+    const d = await api('/api/tab/close', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetId: id }) });
+    toast('已关闭 · ' + (d.title || '标签页'), 'ok');
+    refreshTabs(); refreshStatus();
+  } catch (err) { toast('关闭失败：' + err.message, 'bad'); }
+}
+
+/* ---------- 内容库数据 ---------- */
+let libItems = [];
+let libFilter = 'all';
+let libSearchText = '';
+
+async function loadLibrary() {
+  const [mediaRes, bmRes] = await Promise.allSettled([
+    fetch('/api/media').then((r) => r.json()),
+    fetch('/api/bookmarks').then((r) => r.json()),
+  ]);
+  const media = mediaRes.status === 'fulfilled' ? mediaRes.value : [];
+  const bms = bmRes.status === 'fulfilled' ? bmRes.value : [];
+
+  const items = [];
+  for (const m of media) {
+    const kind = m.kind === 'video' ? 'video' : 'image';
+    const raw = '/media/' + encodeURIComponent(m.name);
+    items.push({
+      type: kind,
+      name: m.name,
+      sub: (m.size / 1024 / 1024).toFixed(1) + ' MB',
+      url: kind === 'video' ? location.origin + raw : location.origin + '/view/image/' + encodeURIComponent(m.name),
+      thumbUrl: kind === 'video' ? null : location.origin + raw,
+      starred: false,
+    });
+  }
+  for (const b of bms) {
+    // 媒体文件的收藏地址不重复列出
+    if (b.url.includes('/view/image/') || b.url.includes('/media/')) continue;
+    items.push({ type: 'web', name: b.name, sub: b.url, url: b.url, thumbUrl: null, starred: true, isBookmark: true });
+  }
+  libItems = items;
+  return items;
+}
+
+async function refreshLibrary() {
+  await loadLibrary();
+  renderLibrary();
+  if (!$('libPop').hidden) renderLibPop();
+}
+
+for (const b of document.querySelectorAll('#filterTabs button')) {
+  b.onclick = () => {
+    for (const x of document.querySelectorAll('#filterTabs button')) x.classList.toggle('active', x === b);
+    libFilter = b.dataset.filter;
+    renderLibrary();
+  };
+}
+$('libSearch').oninput = () => { libSearchText = $('libSearch').value.trim().toLowerCase(); renderLibrary(); };
+
+function renderLibrary() {
+  const box = $('libGrid');
+  const items = libItems.filter((it) => {
+    if (libFilter === 'web' && it.type !== 'web') return false;
+    if (libFilter === 'image' && it.type !== 'image') return false;
+    if (libFilter === 'starred' && !it.starred) return false;
+    if (libSearchText) return (it.name + ' ' + it.sub).toLowerCase().includes(libSearchText);
+    return true;
+  });
+
+  box.textContent = '';
+  if (!items.length) {
+    box.innerHTML = '<div class="empty">没有匹配的内容</div>';
+    return;
+  }
+
+  for (const it of items) {
+    const el = document.createElement('article');
+    el.className = 'asset';
+    el.setAttribute('role', 'button');
+    el.tabIndex = 0;
+
+    const previewClass = it.type === 'web' ? 'asset-preview web' : 'asset-preview image';
+    const previewInner = it.thumbUrl
+      ? '<img loading="lazy" alt="">'
+      : '<span class="ph">' + (it.type === 'web' ? SVG.link : it.type === 'video' ? SVG.video : SVG.image) + '</span>';
+    const badge = it.type === 'web' ? '网页' : it.type === 'video' ? '视频' : '图片';
+
+    el.innerHTML =
+      '<div class="' + previewClass + '">' + previewInner
+        + '<span class="asset-badge">' + badge + '</span>'
+      + '</div>'
+      + '<div class="asset-meta"><b></b><span></span></div>'
+      + '<div class="asset-foot">'
+        + '<button class="btn openAsset">打开</button>'
+        + '<button class="btn primary castAsset">投放</button>'
+      + '</div>'
+      + '<button class="del" title="' + (it.isBookmark ? '取消收藏' : '删除') + '">' + SVG.trash + '</button>';
+
+    if (it.thumbUrl) el.querySelector('img').src = it.thumbUrl;
+    el.querySelector('.asset-meta b').textContent = it.name;
+    el.querySelector('.asset-meta span').textContent = it.sub;
+
+    const go = () => push(it.url, it.isBookmark ? 'tab' : undefined);
+    el.onclick = go;
+    el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+    el.querySelector('.castAsset').onclick = (e) => { e.stopPropagation(); go(); };
+    el.querySelector('.openAsset').onclick = (e) => { e.stopPropagation(); window.open(it.url, '_blank'); };
+    el.querySelector('.del').onclick = (e) => {
+      e.stopPropagation();
+      if (it.isBookmark) removeBookmark(it.url, it.name);
+      else deleteMedia(it.name);
+    };
+    box.appendChild(el);
+  }
+
+  const addCard = document.createElement('button');
+  addCard.className = 'add-card';
+  addCard.innerHTML = '<i>＋</i><b>添加内容</b>';
+  addCard.onclick = pick;
+  box.appendChild(addCard);
+}
+
+/* ---------- 内容库小窗口 ---------- */
+function positionLibPop() {
+  const pop = $('libPop'), btn = $('newTabBtn');
+  const r = btn.getBoundingClientRect();
+  const w = Math.min(330, window.innerWidth - 24);
+  pop.style.width = w + 'px';
+  let left = r.right - w;
+  if (left + w > window.innerWidth - 12) left = window.innerWidth - 12 - w;
+  if (left < 12) left = 12;
+  const top = r.bottom + 8;
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+  pop.style.maxHeight = Math.max(200, window.innerHeight - top - 16) + 'px';
+}
+
+function openLibPop() {
+  const pop = $('libPop');
+  pop.hidden = false;
+  $('newTabBtn').classList.add('on');
+  positionLibPop();
+  renderLibPop();
+  $('libPopUrl').focus();
+  // 数据可能还没拉过，拉完再渲染一次
+  loadLibrary().then(renderLibPop).catch(() => {});
+}
+
+function closeLibPop() {
+  const pop = $('libPop');
+  if (pop.hidden) return;
+  pop.hidden = true;
+  $('newTabBtn').classList.remove('on');
+}
+
+function renderLibPop() {
+  const box = $('libPopList');
+  box.textContent = '';
+  if (!libItems.length) {
+    const e = document.createElement('div');
+    e.className = 'lib-pop-empty';
+    e.textContent = '内容库是空的';
+    box.appendChild(e);
+    return;
+  }
+  for (const it of libItems.slice(0, 60)) {
+    const row = document.createElement('button');
+    row.className = 'lib-pop-item';
+    row.title = it.name;
+
+    const thumb = document.createElement('span');
+    thumb.className = 'lib-pop-thumb';
+    if (it.thumbUrl) {
+      const im = document.createElement('img');
+      im.loading = 'lazy'; im.alt = ''; im.src = it.thumbUrl;
+      thumb.appendChild(im);
+    } else {
+      thumb.innerHTML = it.type === 'web' ? SVG.link : it.type === 'video' ? SVG.video : SVG.image;
+    }
+
+    const copy = document.createElement('span');
+    copy.className = 'lib-pop-copy';
+    const b = document.createElement('b'); b.textContent = it.name;
+    const s = document.createElement('span');
+    s.textContent = it.type === 'web' ? '网页' : it.type === 'video' ? '视频' : '图片';
+    copy.append(b, s);
+
+    row.append(thumb, copy);
+    row.onclick = () => { closeLibPop(); push(it.url, it.isBookmark ? 'tab' : undefined); };
+    box.appendChild(row);
+  }
+}
+
+$('newTabBtn').onclick = () => { $('libPop').hidden ? openLibPop() : closeLibPop(); };
+$('libPopClose').onclick = closeLibPop;
+$('libPopGo').onclick = () => {
+  let u = $('libPopUrl').value.trim();
+  if (!u) return toast('先填个网址', 'bad');
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  closeLibPop();
+  push(u);
+};
+$('libPopUrl').onkeydown = (e) => { if (e.key === 'Enter') $('libPopGo').click(); };
+$('libPopUpload').onclick = () => { closeLibPop(); pick(); };
+$('libPopAll').onclick = () => { closeLibPop(); showView('library'); };
+
+document.addEventListener('mousedown', (e) => {
+  const pop = $('libPop');
+  if (pop.hidden) return;
+  if (pop.contains(e.target) || $('newTabBtn').contains(e.target)) return;
+  closeLibPop();
+});
+window.addEventListener('scroll', () => { if (!$('libPop').hidden) positionLibPop(); }, true);
+window.addEventListener('resize', () => { if (!$('libPop').hidden) positionLibPop(); });
+
+/* ---------- 添加网页 ---------- */
+$('addWebBtn').onclick = () => openForm({
+  title: '添加网页',
+  fields: [
+    { name: 'url', label: '网页地址', required: true, placeholder: 'https://' },
+    { name: 'name', label: '名称', placeholder: '留空则用地址' },
+  ],
+  ok: '添加',
+  onOk: async (v, done) => {
+    let u = v.url;
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    try {
+      await api('/api/bookmarks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: v.name || u, url: u }),
+      });
+      done();
+      toast('已添加', 'ok');
+      refreshLibrary();
+    } catch (err) { toast('添加失败：' + err.message, 'bad'); }
+  },
+});
+
+/* ---------- 上传 ---------- */
+async function uploadFiles(files) {
+  for (const f of files) {
+    toast('上传 ' + f.name + ' …');
+    try {
+      const d = await api('/api/upload', { method: 'POST', headers: { 'X-Filename': encodeURIComponent(f.name) }, body: f });
+      toast('已打开 · ' + d.name, 'ok');
+    } catch (err) { toast('上传失败：' + err.message, 'bad'); }
+  }
+  refreshTabs(); refreshLibrary(); refreshStatus();
+  setTimeout(refreshShot, 800);
+}
+
+const pick = () => $('fileInput').click();
+$('addMediaBtn').onclick = pick;
+$('fileInput').onchange = () => {
+  const files = [...$('fileInput').files];
+  $('fileInput').value = '';
+  if (files.length) uploadFiles(files);
+};
+
+/* ---------- 删除媒体 ---------- */
+async function deleteMedia(name) {
+  let showing = false;
+  try {
+    const st = await (await fetch('/api/status')).json();
+    showing = !!st.url && st.url.includes(encodeURIComponent(name));
+  } catch {}
+  const msg = showing
+    ? '「' + name + '」正在大屏上显示。\n\n删除后画面暂时还在（浏览器已缓存），但重载后会变成裂图。'
+    : '「' + name + '」将从 media/ 目录彻底移除，不可恢复。';
+  const yes = await uiConfirm(msg, { title: '删除文件', ok: '删除', danger: true });
+  if (!yes) return;
+  try {
+    await api('/api/media/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+    toast('已删除 ' + name, 'ok');
+    refreshLibrary();
+  } catch (err) { toast('删除失败：' + err.message, 'bad'); }
+}
+
+/* ---------- 取消收藏 ---------- */
+async function removeBookmark(url, name) {
+  const yes = await uiConfirm('取消收藏「' + name + '」？', { title: '取消收藏', ok: '取消收藏', danger: true });
+  if (!yes) return;
+  try {
+    await api('/api/bookmarks/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+    toast('已取消收藏', 'ok');
+    refreshLibrary();
+  } catch (err) { toast('取消失败：' + err.message, 'bad'); }
+}
+
+/* ---------- 设备管理 ---------- */
+async function refreshDevices() {
+  refreshStatus();
+  refreshProcState();
+  let s = {};
+  try { s = await (await fetch('/api/settings')).json(); } catch {}
+  if (s.deviceName) applyDeviceName(s.deviceName);
+  renderSettings(s);
+}
+
+function renderSettings(s) {
+  const body = $('settingsBody');
+  body.innerHTML = `
+    <div class="setting-group">
+      <div class="setting-row">
+        <div class="setting-copy"><b>设备名称</b></div>
+      </div>
+      <div class="setting-controls">
+        <input class="field name" type="text" maxlength="24" data-key="deviceName" value="">
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-row">
+        <div class="setting-copy"><b>定期重启浏览器</b></div>
+        <button class="toggle${s.autoRestart ? ' on' : ''}" data-key="autoRestart"><i></i></button>
+      </div>
+      <div class="setting-controls">
+        <select class="field" data-key="restartInterval">
+          <option value="day"${s.restartInterval === 'day' ? ' selected' : ''}>每天</option>
+          <option value="week"${s.restartInterval === 'week' ? ' selected' : ''}>每周一</option>
+        </select>
+        <input class="field time" type="time" value="${s.restartTime || '04:00'}" data-key="restartTime">
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-row">
+        <div class="setting-copy"><b>内存超限自动重载页面</b></div>
+        <button class="toggle${s.memoryWatchdog ? ' on' : ''}" data-key="memoryWatchdog"><i></i></button>
+      </div>
+      <div class="setting-controls">
+        <span class="unit">内存超过</span>
+        <input class="field number" type="number" value="${s.memoryLimitMb || 400}" data-key="memoryLimitMb">
+        <span class="unit">MB</span>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-row">
+        <div class="setting-copy"><b>异常退出自动恢复</b></div>
+        <button class="toggle${s.autoRestore ? ' on' : ''}" data-key="autoRestore"><i></i></button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-row">
+        <div class="setting-copy"><b>标签页自动刷新</b></div>
+        <button class="toggle${s.autoRefresh ? ' on' : ''}" data-key="autoRefresh"><i></i></button>
+      </div>
+      <div class="setting-controls">
+        <span class="unit">每隔</span>
+        <input class="field number" type="number" value="${s.refreshInterval || 30}" data-key="refreshInterval">
+        <span class="unit">分钟</span>
+      </div>
+    </div>
+    <div class="save-bar">
+      <button class="btn" id="resetSettings">恢复默认</button>
+      <button class="btn primary" id="saveSettings">保存设置</button>
+    </div>
+  `;
+
+  body.querySelector('[data-key="deviceName"]').value = s.deviceName || currentDeviceName;
+  for (const t of body.querySelectorAll('.toggle')) t.onclick = () => t.classList.toggle('on');
+
+  $('saveSettings').onclick = async () => {
+    const data = {};
+    for (const el of body.querySelectorAll('[data-key]')) {
+      const k = el.dataset.key;
+      if (el.classList.contains('toggle')) data[k] = el.classList.contains('on');
+      else if (el.tagName === 'SELECT') data[k] = el.value;
+      else if (el.type === 'number') { const n = Number(el.value); if (!isNaN(n)) data[k] = n; }
+      else data[k] = el.value.trim();
+    }
+    if (!data.deviceName) data.deviceName = currentDeviceName;
+
+    try {
+      const d = await api('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      applyDeviceName(d.settings.deviceName);
+      toast('已保存', 'ok');
+      refreshStatus();
+    } catch (err) { toast('保存失败：' + err.message, 'bad'); }
+  };
+
+  $('resetSettings').onclick = () => {
+    renderSettings({
+      deviceName: currentDeviceName, autoRestart: true, restartInterval: 'day', restartTime: '04:00',
+      memoryLimitMb: 400, memoryWatchdog: true, autoRestore: true, autoRefresh: false, refreshInterval: 30,
+    });
+    toast('已恢复默认值，需保存生效');
+  };
+}
+
+$('restartNowBtn').onclick = () => procAction($('restartNowBtn'), '/api/chrome/restart', '重启');
+$('addDeviceBtn').onclick = () => toast('多设备支持开发中');
+
+/* ---------- 拖拽上传 ---------- */
+let dragDepth = 0;
+document.addEventListener('dragenter', (e) => {
+  if (!e.dataTransfer?.types.includes('Files')) return;
+  dragDepth++; $('drop').classList.add('on');
+});
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('drop').classList.remove('on'); } });
+document.addEventListener('drop', (e) => {
+  e.preventDefault(); dragDepth = 0; $('drop').classList.remove('on');
+  const files = [...(e.dataTransfer?.files ?? [])];
+  if (files.length) uploadFiles(files);
+});
+
+/* ---------- 按钮绑定 ---------- */
+$('fReload').onclick = () => busy($('fReload'), async () => {
+  toast('重载中…');
+  try { await api('/api/reload', { method: 'POST' }); toast('已重载', 'ok'); refreshStatus(); setTimeout(refreshShot, 800); }
+  catch (err) { toast('重载失败：' + err.message, 'bad'); }
+});
+$('fTop').onclick = toggleTopmost;
+$('fFull').onclick = toggleFullscreen;
+$('zoomIn').onclick = () => stepZoom(1);
+$('zoomOut').onclick = () => stepZoom(-1);
+$('zoomVal').onclick = () => { if (currentZoom !== 1) setZoom(1); };
+
+for (const [id, path, label] of [
+  ['procStart', '/api/chrome/start', '启动'],
+  ['procRestart', '/api/chrome/restart', '重启'],
+  ['procStop', '/api/chrome/stop', '关闭'],
+  ['procStart2', '/api/chrome/start', '启动'],
+  ['procRestart2', '/api/chrome/restart', '重启'],
+  ['procStop2', '/api/chrome/stop', '关闭'],
+]) {
+  $(id).onclick = () => procAction($(id), path, label);
+}
+
+/* ---------- 启动 ---------- */
+(async function boot() {
+  try {
+    const s = await (await fetch('/api/settings')).json();
+    applyDeviceName(s.deviceName || '大屏设备');
+  } catch { applyDeviceName('大屏设备'); }
+
+  refreshStatus();
+  refreshShot();
+  refreshTabs();
+  refreshProcState();
+  refreshTopmost();
+  loadLibrary();
+  startShotTimer();
+
+  setInterval(refreshStatus, 5000);
+  setInterval(refreshTabs, 10000);
+  setInterval(refreshProcState, 6000);
+})();
+</script>
+</body>
+</html>

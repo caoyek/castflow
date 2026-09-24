@@ -1,0 +1,14 @@
+{
+  "target": "127.0.0.1:9222",
+  "port": 8080,
+  "publicBase": "auto",
+  "settleMs": 1500,
+  "memoryLimitMb": 400,
+  "memoryCheckSec": 60,
+  "chromePath": "",
+  "chromeProfile": "chrome-profile",
+  "chromeExtraArgs": [
+    "--start-fullscreen"
+  ],
+  "startUrl": "about:blank"
+}

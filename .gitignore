@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.exe
+
+# Chrome user profile
+chrome-profile/
+
+# Log files
+*.log
+castflow.log
+autostart.log
+server.out.log
+server.err.log
+
+# Local and backup configurations
+*.local.json
+*.bak.json
+
+# User uploaded media
+media/*
+!media/.gitkeep
+
+# System and IDE files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
