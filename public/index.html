@@ -388,7 +388,8 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .sched-head-actions{display:flex;align-items:center;gap:10px}
 
 /* 开关组件 */
-.sched-switch{position:relative;display:inline-flex;align-items:center;cursor:pointer;gap:8px;user-select:none;font-size:12.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 12px;height:var(--ctl);transition:all .2s}
+.sched-switch{position:relative;display:inline-flex;align-items:center;cursor:pointer;gap:8px;user-select:none;font-size:12.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 12px;height:var(--ctl);transition:all .2s;white-space:nowrap;flex:none}
+.sched-switch span{white-space:nowrap}
 .sched-switch:hover{border-color:var(--line2);color:var(--text)}
 .sched-switch input{position:absolute;opacity:0;width:0;height:0}
 .sched-slider{width:32px;height:18px;background:#253041;border-radius:20px;position:relative;transition:background .25s;flex:none}
@@ -494,18 +495,19 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .push-task-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:18px;box-shadow:var(--shadow);transition:border-color .2s,box-shadow .2s;position:relative}
 .push-task-card:hover{border-color:var(--line2)}
 .push-task-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.push-task-brand{display:flex;align-items:center;gap:11px;min-width:0}
+.push-task-brand{display:flex;align-items:center;gap:11px;min-width:0;flex:1}
 .push-task-logo{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .push-task-logo.wecom{background:linear-gradient(135deg,#1e6be5,#1551b8)}
 .push-task-logo.ding{background:linear-gradient(135deg,#0089ff,#006cd4)}
 .push-task-logo.feishu{background:linear-gradient(135deg,#00d6b9,#009e86)}
 .push-task-logo.custom{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
-.push-task-meta{min-width:0}
+.push-task-meta{min-width:0;flex:1}
 .push-task-name{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
 .push-task-target{font-size:11px;color:var(--muted);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
 
-/* 消息任务卡片开关（与排期开关严格统一规范） */
-.push-task-top .sched-switch{height:32px;padding:0 10px;font-size:11.5px;border-radius:8px;gap:7px}
+/* 消息任务卡片开关（与排期开关严格统一规范，禁止挤压折行） */
+.push-task-top .sched-switch{height:32px;padding:0 10px;font-size:11.5px;border-radius:8px;gap:7px;flex:none;white-space:nowrap}
+.push-task-top .sched-switch span{white-space:nowrap}
 
 .push-task-events{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .push-event-tag{font-size:11px;padding:3px 8px;border-radius:5px;background:#141d28;border:1px solid var(--line);color:#94a3b8;display:inline-flex;align-items:center;line-height:1.2}
