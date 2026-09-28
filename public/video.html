@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>视频展示</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    cursor: none;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  video {
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+    background: #000;
+    outline: none;
+    border: none;
+  }
+</style>
+</head>
+<body>
+<video id="player" autoplay loop playsinline webkit-playsinline></video>
+
+<script>
+  // 路径形如 /view/video/xxx.mp4，取出文件名并请求真实媒体流
+  const rawPath = location.pathname.replace(/^\/view\/video\//, '');
+  const name = decodeURIComponent(rawPath.split('/').pop() || '');
+  const player = document.getElementById('player');
+
+  if (name) {
+    player.src = '/media/' + encodeURIComponent(name);
+  }
+
+  // 保证 loop 循环属性始终开启
+  player.loop = true;
+
+  // 智能播放控制：优先有声播放，若被浏览器自动播放策略限制则自动降级为静音播放
+  function startPlayback() {
+    const playPromise = player.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // 自动降级为静音自动播放（大屏必保画面无阻播放）
+        player.muted = true;
+        player.play().catch(() => {});
+      });
+    }
+  }
+
+  player.addEventListener('canplay', () => {
+    startPlayback();
+  }, { once: true });
+
+  // 兜底循环：监听播放结束事件，即便极端环境下原生的 loop 属性未生效，也强制回零重播
+  player.addEventListener('ended', () => {
+    player.currentTime = 0;
+    startPlayback();
+  });
+
+  // 页面从后台切回前台（如排期切换或多标签页激活）时确保继续播放
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && player.paused) {
+      startPlayback();
+    }
+  });
+
+  // 异常重连重试：若因网络或服务抖动导致播放错误，3 秒后重新加载并播放
+  player.addEventListener('error', () => {
+    setTimeout(() => {
+      if (player.error && name) {
+        player.load();
+        startPlayback();
+      }
+    }, 3000);
+  });
+
+  // 点击屏幕切换静音状态（方便现场需要声音时轻点解禁）
+  document.addEventListener('click', () => {
+    player.muted = !player.muted;
+  });
+
+  // 双击全屏切换
+  document.addEventListener('dblclick', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  });
+</script>
+</body>
+</html>

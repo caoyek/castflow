@@ -1395,14 +1395,14 @@ async function loadLibrary() {
       type: kind,
       name: m.name,
       sub: (m.size / 1024 / 1024).toFixed(1) + ' MB',
-      url: kind === 'video' ? location.origin + raw : location.origin + '/view/image/' + encodeURIComponent(m.name),
+      url: kind === 'video' ? location.origin + '/view/video/' + encodeURIComponent(m.name) : location.origin + '/view/image/' + encodeURIComponent(m.name),
       rawUrl: location.origin + raw,
       thumbUrl: kind === 'video' ? null : location.origin + raw,
       starred: false,
     });
   }
   for (const b of bms) {
-    if (b.url.includes('/view/image/') || b.url.includes('/media/')) continue;
+    if (b.url.includes('/view/image/') || b.url.includes('/view/video/') || b.url.includes('/media/')) continue;
     let host = '';
     let faviconUrl = '';
     try {

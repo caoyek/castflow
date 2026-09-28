@@ -127,7 +127,7 @@ function resolveRuleUrl(rule, publicBase) {
   if (rule.type === 'video') {
     if (!target) return 'about:blank';
     if (/^https?:\/\//i.test(target)) return target;
-    return `${publicBase}/media/${encodeURIComponent(target)}`;
+    return `${publicBase}/view/video/${encodeURIComponent(target)}`;
   }
 
   if (rule.type === 'image') {

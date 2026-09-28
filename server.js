@@ -493,7 +493,7 @@ const server = http.createServer(async (req, res) => {
 
       const base = PUBLIC_BASE;
       const url = type.startsWith('video')
-        ? `${base}/media/${encodeURIComponent(name)}`
+        ? `${base}/view/video/${encodeURIComponent(name)}`
         : `${base}/view/image/${encodeURIComponent(name)}`;
       return json(res, 200, { ok: true, name, bytes: buf.length, url });
     }
@@ -569,6 +569,11 @@ const server = http.createServer(async (req, res) => {
     // 图片展示页：同一个 HTML，靠前端解析路径里的文件名
     if (pathname.startsWith('/view/image/')) {
       return serveFile(req, res, path.join(PUBLIC_DIR, 'image.html'));
+    }
+
+    // 视频展示页：专门的全屏自动循环播放页面
+    if (pathname.startsWith('/view/video/')) {
+      return serveFile(req, res, path.join(PUBLIC_DIR, 'video.html'));
     }
 
     if (pathname.startsWith('/media/')) {

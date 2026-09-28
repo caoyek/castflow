@@ -28,7 +28,7 @@ const DEFAULTS = {
   chromeProfile: 'chrome-profile',  // 相对 = 程序目录下
   // 大屏默认全屏：--start-fullscreen 让窗口一起来就是全屏，不露任务栏和边框。
   // 它只在 Chrome 启动那一刻生效，所以「Chrome 已经在跑」的情况由 autostart 用 CDP 兜一次。
-  chromeExtraArgs: ['--start-fullscreen'],
+  chromeExtraArgs: ['--start-fullscreen', '--autoplay-policy=no-user-gesture-required'],
   startUrl: 'about:blank',
 };
 

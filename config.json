@@ -1,4 +1,4 @@
-﻿{
+{
   "target": "127.0.0.1:9222",
   "port": 18089,
   "publicBase": "auto",
@@ -8,7 +8,8 @@
   "chromePath": "",
   "chromeProfile": "chrome-profile",
   "chromeExtraArgs": [
-    "--start-fullscreen"
+    "--start-fullscreen",
+    "--autoplay-policy=no-user-gesture-required"
   ],
   "startUrl": "about:blank"
 }
