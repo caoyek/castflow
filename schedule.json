@@ -1,31 +1,22 @@
 {
-  "enabled": false,
+  "enabled": true,
   "rules": [
-    {
-      "id": "rule_default_1",
-      "name": "上午看板",
-      "timeStart": "09:00",
-      "timeEnd": "12:00",
-      "type": "web",
-      "target": "http://127.0.0.1:18089",
-      "enabled": true
-    },
-    {
-      "id": "rule_default_2",
-      "name": "午间视频",
-      "timeStart": "12:00",
-      "timeEnd": "14:00",
-      "type": "video",
-      "target": "",
-      "enabled": true
-    },
     {
       "id": "rule_default_3",
       "name": "下午展播",
       "timeStart": "14:00",
-      "timeEnd": "18:00",
+      "timeEnd": "17:54",
       "type": "image",
-      "target": "",
+      "target": "品牌宣传视频-封面.jpg",
+      "enabled": true
+    },
+    {
+      "id": "rule_1790589154916",
+      "name": "",
+      "timeStart": "17:55",
+      "timeEnd": "18:00",
+      "type": "web",
+      "target": "https://bi.aliyuncs.com/token3rd/dashboard/view/pc.htm?pageId=cd98aa82-7415-4902-80fd-b506960f8de1&accessToken=09992f0910309f6390d26affc9afeccd&dd_orientation=auto",
       "enabled": true
     }
   ]
