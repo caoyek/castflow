@@ -713,7 +713,7 @@ setInterval(async () => {
 }, 30 * 1000);
 
 // ---- 分时段排期调度巡检 ----
-// 每 15 秒检查一次时间段跨越点，自动驱动大屏无缝切换内容
+// 每 1 秒检查一次时间段跨越点（高精度毫秒比对：0秒开始，最后一毫秒结束无缝切换）
 setInterval(async () => {
   try {
     const pid = await chromeCtl.findPidOnPort(CDP_PORT);
@@ -723,7 +723,7 @@ setInterval(async () => {
   } catch (err) {
     // 巡检异常跳过
   }
-}, 15 * 1000);
+}, 1000);
 
 // ---- 启动 ----
 server.on('error', (err) => {

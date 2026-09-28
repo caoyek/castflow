@@ -81,15 +81,54 @@ function saveSchedule(schedule) {
   return clean;
 }
 
-// 检查某个 HH:mm 是否在 [start, end) 范围内，支持跨午夜（如 22:00 到 08:00）
-function isTimeInRange(nowTime, start, end) {
-  if (!start || !end) return false;
-  if (start === end) return true; // 全天
-  if (start < end) {
-    return nowTime >= start && nowTime < end;
+// 计算某个时刻处于当天的绝对毫秒数: 0 ~ 86,399,999 ms
+function getDayMs(date = new Date()) {
+  return ((date.getHours() * 60 + date.getMinutes()) * 60 + date.getSeconds()) * 1000 + date.getMilliseconds();
+}
+
+// 时段字符串解析为当天的毫秒起始点
+// 起始时间为 0 秒 0 毫秒: (sH * 60 + sM) * 60 * 1000
+function parseTimeToDayMs(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return 0;
+  const parts = timeStr.trim().split(':').map(Number);
+  const h = parts[0] || 0;
+  const m = parts[1] || 0;
+  const s = parts[2] || 0;
+  return ((h * 60 + m) * 60 + s) * 1000;
+}
+
+// 检查当前时刻是否在 [start, end) 范围内，支持跨午夜（如 22:00 到 08:00）
+// 模式 A：起始时间为 0 秒 000 毫秒；结束时间为最后一毫秒 (endBoundaryMs - 1 毫秒)
+function isTimeInRangeMs(nowOrMs, startStr, endStr) {
+  if (!startStr || !endStr) return false;
+  if (startStr === endStr) return true; // 全天 24 小时生效
+
+  const currentMs = typeof nowOrMs === 'number'
+    ? nowOrMs
+    : getDayMs(nowOrMs instanceof Date ? nowOrMs : new Date());
+
+  const startMs = parseTimeToDayMs(startStr);       // 0秒 0毫秒起
+  const endBoundaryMs = parseTimeToDayMs(endStr);   // 结束时刻分界点
+
+  if (startMs < endBoundaryMs) {
+    // 正常同日时段：[startMs, endBoundaryMs)
+    // 最后一毫秒为 endBoundaryMs - 1 ms（如 12:00:00 前的 11:59:59.999）
+    return currentMs >= startMs && currentMs < endBoundaryMs;
   }
-  // 跨午夜
-  return nowTime >= start || nowTime < end;
+
+  // 跨午夜时段（例如 22:00 到 08:00）：
+  // [startMs, 86400000) 或 [0, endBoundaryMs)
+  return currentMs >= startMs || currentMs < endBoundaryMs;
+}
+
+function isTimeInRange(nowTime, start, end) {
+  if (nowTime instanceof Date || typeof nowTime === 'number') {
+    return isTimeInRangeMs(nowTime, start, end);
+  }
+  if (typeof nowTime === 'string') {
+    return isTimeInRangeMs(parseTimeToDayMs(nowTime), start, end);
+  }
+  return isTimeInRangeMs(getDayMs(), start, end);
 }
 
 function getCurrentTimeStr() {
@@ -99,12 +138,17 @@ function getCurrentTimeStr() {
   return `${h}:${m}`;
 }
 
-// 获取当前命中的规则
-function getActiveRule(schedule, nowTime) {
+// 获取当前命中的规则（毫秒精度匹配）
+function getActiveRule(schedule, nowTimeOrDate) {
   if (!schedule || !schedule.enabled || !Array.isArray(schedule.rules)) return null;
-  const time = nowTime || getCurrentTimeStr();
+  const nowMs = typeof nowTimeOrDate === 'number'
+    ? nowTimeOrDate
+    : (nowTimeOrDate instanceof Date
+      ? getDayMs(nowTimeOrDate)
+      : (typeof nowTimeOrDate === 'string' ? parseTimeToDayMs(nowTimeOrDate) : getDayMs()));
+
   for (const rule of schedule.rules) {
-    if (rule.enabled !== false && isTimeInRange(time, rule.timeStart, rule.timeEnd)) {
+    if (rule.enabled !== false && isTimeInRangeMs(nowMs, rule.timeStart, rule.timeEnd)) {
       return rule;
     }
   }
@@ -167,8 +211,8 @@ async function checkScheduleTick(screen, publicBase, chromeOnline) {
     return;
   }
 
-  const nowTime = getCurrentTimeStr();
-  const matchedRule = getActiveRule(schedule, nowTime);
+  const now = new Date();
+  const matchedRule = getActiveRule(schedule, now);
 
   // 如果没有匹配到任何时段
   if (!matchedRule) {
@@ -176,7 +220,7 @@ async function checkScheduleTick(screen, publicBase, chromeOnline) {
     return;
   }
 
-  // 如果命中规则发生了变化（即跨过了时段边界）
+  // 如果命中规则发生了变化（即跨过了时段边界，毫秒级无缝衔接）
   if (matchedRule.id !== currentActiveRuleId) {
     currentActiveRuleId = matchedRule.id;
     isManualOverride = false;
@@ -197,8 +241,8 @@ async function resumeSchedule(screen, publicBase) {
     saveSchedule(schedule);
   }
   isManualOverride = false;
-  const nowTime = getCurrentTimeStr();
-  const matchedRule = getActiveRule(schedule, nowTime);
+  const now = new Date();
+  const matchedRule = getActiveRule(schedule, now);
   if (matchedRule) {
     currentActiveRuleId = matchedRule.id;
     await executeRule(matchedRule, screen, publicBase);
@@ -216,12 +260,12 @@ async function testRule(rule, screen, publicBase) {
 
 function getStatus() {
   const schedule = loadSchedule();
-  const nowTime = getCurrentTimeStr();
-  const activeRule = getActiveRule(schedule, nowTime);
+  const now = new Date();
+  const activeRule = getActiveRule(schedule, now);
   return {
     enabled: schedule.enabled,
     rules: schedule.rules,
-    nowTime,
+    nowTime: getCurrentTimeStr(),
     activeRuleId: activeRule ? activeRule.id : null,
     isManualOverride,
   };
@@ -235,8 +279,8 @@ async function toggleSchedule(enabled, screen, publicBase) {
   isManualOverride = false;
 
   if (schedule.enabled && screen) {
-    const nowTime = getCurrentTimeStr();
-    const matchedRule = getActiveRule(schedule, nowTime);
+    const now = new Date();
+    const matchedRule = getActiveRule(schedule, now);
     if (matchedRule) {
       currentActiveRuleId = matchedRule.id;
       await executeRule(matchedRule, screen, publicBase);
@@ -261,4 +305,8 @@ module.exports = {
   testRule,
   getStatus,
   toggleSchedule,
+  isTimeInRange,
+  isTimeInRangeMs,
+  getDayMs,
+  parseTimeToDayMs,
 };
