@@ -476,26 +476,54 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .user-actions{display:flex;align-items:center;gap:6px}
 .user-actions .btn{height:30px;padding:0 10px;font-size:11.5px}
 
-/* ---------- 消息推送 ---------- */
-.msg-layout{display:grid;grid-template-columns:minmax(340px,440px) minmax(0,1fr);gap:18px}
-.msg-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
-.msg-card-body{padding:18px;display:flex;flex-direction:column;gap:16px}
-.msg-form-item{display:flex;flex-direction:column;gap:7px}
-.msg-form-item label{font-size:12px;font-weight:600;color:var(--muted)}
-.msg-textarea{width:100%;height:84px;padding:10px 12px;background:#151c26;border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13px;resize:none;outline:none;transition:border-color .15s;font-family:inherit}
-.msg-textarea:focus{border-color:var(--blue)}
-.msg-preview-screen{background:#080d14;border:1px solid var(--line2);border-radius:10px;height:140px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;margin-bottom:14px}
-.msg-preview-screen::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:12px 12px;pointer-events:none}
-.msg-preview-screen-title{position:absolute;top:10px;left:12px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.msg-preview-screen-title .dot{width:6px;height:6px;border-radius:50%;background:#388bfd;box-shadow:0 0 6px #388bfd}
-.msg-ticker-bar{background:rgba(220,38,38,.88);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(220,38,38,.3);position:relative;z-index:2;overflow:hidden;white-space:nowrap}
-.msg-ticker-text{animation:tickerScroll 14s linear infinite;display:inline-block}
-@keyframes tickerScroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
-.msg-history-list{display:flex;flex-direction:column;gap:10px;padding:14px}
-.msg-history-item{background:#151d28;border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;transition:border-color .15s}
-.msg-history-item:hover{border-color:var(--line2)}
-.msg-history-text{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;line-height:1.5}
-.msg-history-meta{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted)}
+/* ---------- 消息推送与 Webhook 机器人 ---------- */
+.msg-top-banner{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.msg-banner-info{display:flex;align-items:center;gap:14px}
+.msg-banner-icon{width:42px;height:42px;border-radius:11px;background:rgba(56,139,253,.12);border:1px solid rgba(56,139,253,.25);display:grid;place-items:center;color:#58a6ff;flex:none}
+.msg-banner-icon svg{width:22px;height:22px}
+.msg-banner-text b{display:block;font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.msg-banner-text span{font-size:11.5px;color:var(--muted)}
+.msg-banner-actions{display:flex;gap:8px}
+
+.bot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;margin-bottom:20px}
+.bot-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s}
+.bot-card:hover{border-color:var(--line2)}
+.bot-card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:#0e131b}
+.bot-brand{display:flex;align-items:center;gap:10px}
+.bot-logo{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;flex:none}
+.bot-logo.wecom{background:linear-gradient(135deg,#1e6be5,#1551b8)}
+.bot-logo.ding{background:linear-gradient(135deg,#0089ff,#006cd4)}
+.bot-logo.feishu{background:linear-gradient(135deg,#00d6b9,#009e86)}
+.bot-logo.custom{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+.bot-title{font-size:13.5px;font-weight:700;color:var(--text)}
+.bot-card-body{padding:16px;display:flex;flex-direction:column;gap:13px;flex:1}
+.bot-field-label{font-size:11.5px;color:var(--muted);font-weight:600;display:block;margin-bottom:5px}
+.bot-events-box{display:flex;flex-direction:column;gap:7px;background:#141b25;border:1px solid var(--line);border-radius:8px;padding:10px}
+.bot-event-checkbox{display:flex;align-items:center;gap:8px;font-size:12px;color:#c3cfdd;cursor:pointer}
+.bot-event-checkbox input{cursor:pointer}
+.bot-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-top:1px solid var(--line);background:#0e131b}
+.bot-card-foot .btn{height:30px;padding:0 12px;font-size:11.5px}
+
+.push-split-layout{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px}
+.push-snapshot-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.push-shot-thumb-box{background:#070b10;border:1px solid var(--line2);border-radius:10px;height:170px;position:relative;overflow:hidden;display:grid;place-items:center;margin-bottom:12px}
+.push-shot-thumb-box img{width:100%;height:100%;object-fit:cover;display:block}
+.push-shot-tag{position:absolute;top:8px;right:8px;background:rgba(9,12,17,.85);border:1px solid rgba(255,255,255,.1);color:#c6d2e0;font-size:10.5px;padding:3px 7px;border-radius:5px}
+
+.push-log-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.push-log-list{display:flex;flex-direction:column;gap:10px;padding:16px}
+.push-log-item{background:#151d28;border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;transition:border-color .15s}
+.push-log-item:hover{border-color:var(--line2)}
+.push-log-channel{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;margin-bottom:5px}
+.push-log-channel.wecom{background:rgba(30,107,229,.15);color:#70a5f9;border:1px solid rgba(30,107,229,.3)}
+.push-log-channel.ding{background:rgba(0,137,255,.15);color:#60b5ff;border:1px solid rgba(0,137,255,.3)}
+.push-log-channel.feishu{background:rgba(0,214,185,.15);color:#5eead4;border:1px solid rgba(0,214,185,.3)}
+.push-log-content{font-size:12.5px;color:var(--text);margin-bottom:4px;line-height:1.5}
+.push-log-time{font-size:11px;color:var(--muted)}
+
+@media(max-width:960px){
+  .push-split-layout{grid-template-columns:1fr}
+}
 
 /* ---------- 窄屏设备条 ---------- */
 .device-inline{display:none;align-items:center;justify-content:space-between;gap:12px;
@@ -923,106 +951,203 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 
       <!-- ---------- 消息推送 ---------- -->
       <section class="view" id="view-messages">
-        <div class="msg-layout">
-          <!-- 左侧：消息编辑发布 -->
-          <div class="msg-card">
-            <div class="card-title">
-              <span>大屏即时插播消息</span>
-              <span class="online"><i class="dot"></i>广播通道就绪</span>
+        <!-- 顶部功能横幅 -->
+        <div class="msg-top-banner">
+          <div class="msg-banner-info">
+            <div class="msg-banner-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             </div>
-            <div class="msg-card-body">
-              <div class="msg-form-item">
-                <label>目标大屏</label>
-                <select class="field dev-placeholder-func">
-                  <option>大屏设备 (127.0.0.1:9222)</option>
-                  <option>全网广播 (所有在线大屏)</option>
-                </select>
-              </div>
+            <div class="msg-banner-text">
+              <b>Webhook 群机器人与运维告警通知</b>
+              <span>支持将大屏异常离线告警、看门狗重启通知、定时画面巡检截图自动推送到各协作群</span>
+            </div>
+          </div>
+          <div class="msg-banner-actions">
+            <button class="btn dev-placeholder-func">全部连通性测试</button>
+            <button class="btn primary dev-placeholder-func">＋ 添加自定义 Webhook</button>
+          </div>
+        </div>
 
-              <div class="msg-form-item">
-                <label>呈现模式</label>
-                <div class="sched-segmented">
-                  <button type="button" class="sched-seg-btn active dev-placeholder-func">底部跑马灯</button>
-                  <button type="button" class="sched-seg-btn dev-placeholder-func">居中通知卡片</button>
-                  <button type="button" class="sched-seg-btn dev-placeholder-func">紧急全屏插播</button>
+        <!-- 机器人渠道配置网格 -->
+        <div class="bot-grid">
+          <!-- 企业微信机器人 -->
+          <div class="bot-card">
+            <div class="bot-card-head">
+              <div class="bot-brand">
+                <span class="bot-logo wecom">企微</span>
+                <span class="bot-title">企业微信群机器人</span>
+              </div>
+              <label class="sched-switch dev-placeholder-func" style="height:28px;padding:2px 8px;font-size:11px" title="启用/停用">
+                <input type="checkbox" checked>
+                <span class="sched-slider" style="width:26px;height:15px"></span>
+              </label>
+            </div>
+            <div class="bot-card-body">
+              <div>
+                <span class="bot-field-label">Webhook 地址</span>
+                <input class="field dev-placeholder-func" style="width:100%" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." value="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=******">
+              </div>
+              <div>
+                <span class="bot-field-label">触发推送事件</span>
+                <div class="bot-events-box">
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 大屏设备掉线 / 异常离线告警</label>
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 内存超限看门狗重载与进程恢复通知</label>
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 定时巡检推送 (附带当前大屏画面截图)</label>
                 </div>
               </div>
-
-              <div class="msg-form-item">
-                <label>消息正文</label>
-                <textarea class="msg-textarea" placeholder="输入要推送到大屏的文字内容，例如：热烈欢迎各位领导专家莅临参观指导！"></textarea>
-                <div class="sched-tags" style="margin-top:6px">
-                  <span class="sched-tag dev-placeholder-func">欢迎莅临指导</span>
-                  <span class="sched-tag dev-placeholder-func">紧急会议通知</span>
-                  <span class="sched-tag dev-placeholder-func">恶劣天气预警</span>
-                </div>
-              </div>
-
-              <div class="msg-form-item">
-                <label>持续时长</label>
-                <select class="field dev-placeholder-func">
-                  <option>展示 15 秒后自动消失</option>
-                  <option>展示 30 秒后自动消失</option>
-                  <option>展示 60 秒后自动消失</option>
-                  <option>持续轮播至手动撤回</option>
-                </select>
-              </div>
-
-              <div style="display:flex;gap:10px;margin-top:6px">
-                <button class="btn dev-placeholder-func" style="flex:1">预览效果</button>
-                <button class="btn primary dev-placeholder-func" style="flex:1">立即推送到大屏</button>
+            </div>
+            <div class="bot-card-foot">
+              <span class="online" style="font-size:11px"><i class="dot"></i>已配置 (启用中)</span>
+              <div style="display:flex;gap:6px">
+                <button class="btn dev-placeholder-func">测试发送</button>
+                <button class="btn primary dev-placeholder-func">保存</button>
               </div>
             </div>
           </div>
 
-          <!-- 右侧：屏幕模拟预览与推送记录 -->
-          <div class="msg-card">
-            <div class="card-title">
-              <span>屏幕实时模拟与历史推送</span>
-              <button class="btn dev-placeholder-func" style="height:32px;font-size:11.5px">清空历史</button>
+          <!-- 钉钉群机器人 -->
+          <div class="bot-card">
+            <div class="bot-card-head">
+              <div class="bot-brand">
+                <span class="bot-logo ding">钉钉</span>
+                <span class="bot-title">钉钉群机器人</span>
+              </div>
+              <label class="sched-switch dev-placeholder-func" style="height:28px;padding:2px 8px;font-size:11px" title="启用/停用">
+                <input type="checkbox" checked>
+                <span class="sched-slider" style="width:26px;height:15px"></span>
+              </label>
             </div>
-            <div style="padding:16px">
-              <!-- 大屏微缩模拟窗口 -->
-              <div class="msg-preview-screen">
-                <div class="msg-preview-screen-title"><i class="dot"></i>大屏模拟预览</div>
-                <div class="msg-ticker-bar">
-                  <span class="msg-ticker-text">📢 【插播通知】热烈欢迎各位领导专家莅临 CastFlow 展厅参观指导！祝参观交流圆满成功！</span>
+            <div class="bot-card-body">
+              <div>
+                <span class="bot-field-label">Webhook 地址</span>
+                <input class="field dev-placeholder-func" style="width:100%" placeholder="https://oapi.dingtalk.com/robot/send?access_token=..." value="https://oapi.dingtalk.com/robot/send?access_token=******">
+              </div>
+              <div>
+                <span class="bot-field-label">安全设置加签 Secret (选填)</span>
+                <input class="field dev-placeholder-func" style="width:100%" placeholder="SEC..." value="SEC128938******">
+              </div>
+              <div>
+                <span class="bot-field-label">触发推送事件</span>
+                <div class="bot-events-box">
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 大屏设备掉线 / 异常离线告警</label>
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 内存超限看门狗重载与进程恢复通知</label>
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox"> 定时巡检推送 (附带当前大屏画面截图)</label>
                 </div>
               </div>
-
-              <!-- 历史推送 -->
-              <div class="card-title" style="border:0;padding:0 0 10px 0;height:auto;font-size:13px">
-                <span>近期推送记录</span>
+            </div>
+            <div class="bot-card-foot">
+              <span class="online" style="font-size:11px"><i class="dot"></i>已配置 (启用中)</span>
+              <div style="display:flex;gap:6px">
+                <button class="btn dev-placeholder-func">测试发送</button>
+                <button class="btn primary dev-placeholder-func">保存</button>
               </div>
-              <div class="msg-history-list" style="padding:0">
-                <div class="msg-history-item">
-                  <div style="min-width:0;flex:1">
-                    <div class="msg-history-text">热烈欢迎各位领导专家莅临 CastFlow 展厅参观指导！</div>
-                    <div class="msg-history-meta">
-                      <span class="online"><i class="dot"></i>已送达大屏</span>
-                      <span>底部跑马灯</span>
-                      <span>10 分钟前</span>
-                    </div>
-                  </div>
-                  <div style="display:flex;gap:6px;flex:none">
-                    <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px">重发</button>
-                    <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px">撤回</button>
-                  </div>
-                </div>
+            </div>
+          </div>
 
-                <div class="msg-history-item">
-                  <div style="min-width:0;flex:1">
-                    <div class="msg-history-text">全体注意：今日 16:30 将进行展厅消防联动系统例行测试。</div>
-                    <div class="msg-history-meta">
-                      <span>已结束</span>
-                      <span>居中通知卡片</span>
-                      <span>昨天 15:20</span>
-                    </div>
-                  </div>
-                  <div style="display:flex;gap:6px;flex:none">
-                    <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px">重发</button>
-                  </div>
+          <!-- 飞书群机器人 -->
+          <div class="bot-card">
+            <div class="bot-card-head">
+              <div class="bot-brand">
+                <span class="bot-logo feishu">飞书</span>
+                <span class="bot-title">飞书群机器人</span>
+              </div>
+              <label class="sched-switch dev-placeholder-func" style="height:28px;padding:2px 8px;font-size:11px" title="启用/停用">
+                <input type="checkbox">
+                <span class="sched-slider" style="width:26px;height:15px"></span>
+              </label>
+            </div>
+            <div class="bot-card-body">
+              <div>
+                <span class="bot-field-label">Webhook 地址</span>
+                <input class="field dev-placeholder-func" style="width:100%" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/...">
+              </div>
+              <div>
+                <span class="bot-field-label">签名校验密钥 (选填)</span>
+                <input class="field dev-placeholder-func" style="width:100%" placeholder="签名校验 Token">
+              </div>
+              <div>
+                <span class="bot-field-label">触发推送事件</span>
+                <div class="bot-events-box">
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 大屏设备掉线 / 异常离线告警</label>
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 排期时段切换提醒</label>
+                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 定时巡检推送 (附带当前大屏画面截图)</label>
                 </div>
+              </div>
+            </div>
+            <div class="bot-card-foot">
+              <span style="font-size:11px;color:var(--muted)">未开启</span>
+              <div style="display:flex;gap:6px">
+                <button class="btn dev-placeholder-func">测试发送</button>
+                <button class="btn primary dev-placeholder-func">保存</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 画面快照即时推送 & 推送日志 -->
+        <div class="push-split-layout">
+          <!-- 左侧：画面快照即时推送 -->
+          <div class="push-snapshot-card">
+            <div class="card-title">
+              <span>📸 画面快照即时推送到群</span>
+            </div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+              <div class="push-shot-thumb-box">
+                <img id="pushLiveShot" src="/api/shot" alt="大屏实时画面" onerror="this.style.opacity=.3">
+                <span class="push-shot-tag">大屏当前实时截屏</span>
+              </div>
+              <div>
+                <span class="bot-field-label">推送目标渠道</span>
+                <select class="field dev-placeholder-func" style="width:100%">
+                  <option>全部已启用的群机器人 (企微 + 钉钉)</option>
+                  <option>仅企业微信群机器人</option>
+                  <option>仅钉钉群机器人</option>
+                  <option>仅飞书群机器人</option>
+                </select>
+              </div>
+              <div>
+                <span class="bot-field-label">巡检附言 (可选)</span>
+                <input class="field dev-placeholder-func" style="width:100%" value="CastFlow 展厅大屏巡检汇报：当前播放画面正常，状态良好。">
+              </div>
+              <button class="btn primary dev-placeholder-func" style="height:38px;margin-top:4px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                <span>立即推送到指定群聊</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 右侧：推送日志与送达历史 -->
+          <div class="push-log-card">
+            <div class="card-title">
+              <span>近期推送记录与送达状态</span>
+              <button class="btn dev-placeholder-func" style="height:30px;font-size:11px">清空记录</button>
+            </div>
+            <div class="push-log-list">
+              <div class="push-log-item">
+                <div style="min-width:0;flex:1">
+                  <span class="push-log-channel wecom">企业微信群机器人</span>
+                  <div class="push-log-content"><b>【定时巡检画面】</b> 成功将当前大屏画面截图推送至 <code>#展厅运营监控群</code> (图片格式 JPEG，大小 142KB)</div>
+                  <div class="push-log-time">今天 17:30 · 耗时 380ms · 状态: 200 OK</div>
+                </div>
+                <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px;flex:none">重发</button>
+              </div>
+
+              <div class="push-log-item">
+                <div style="min-width:0;flex:1">
+                  <span class="push-log-channel ding">钉钉群机器人</span>
+                  <div class="push-log-content"><b>【看门狗恢复通知】</b> 页面 JS 内存达到 412MB 触发上限，看门狗已自动平滑重载页面并恢复就绪</div>
+                  <div class="push-log-time">今天 14:15 · 耗时 290ms · 状态: 200 OK</div>
+                </div>
+                <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px;flex:none">重发</button>
+              </div>
+
+              <div class="push-log-item">
+                <div style="min-width:0;flex:1">
+                  <span class="push-log-channel wecom">企业微信群机器人</span>
+                  <div class="push-log-content"><b>【连通性测试】</b> CastFlow 大屏群机器人通讯链路自检通过，系统运行正常</div>
+                  <div class="push-log-time">昨天 18:00 · 耗时 210ms · 状态: 200 OK</div>
+                </div>
+                <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px;flex:none">重发</button>
               </div>
             </div>
           </div>
@@ -1257,6 +1382,10 @@ function showView(v) {
   if (v === 'library') refreshLibrary();
   else if (v === 'devices') refreshDevices();
   else if (v === 'schedule') refreshSchedule();
+  else if (v === 'messages') {
+    const shot = $('pushLiveShot');
+    if (shot) shot.src = '/api/shot?t=' + Date.now();
+  }
   window.scrollTo({ top: 0 });
 }
 
