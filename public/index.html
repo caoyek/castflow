@@ -227,13 +227,21 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 
 .asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
 .asset{border:1px solid var(--line);border-radius:13px;background:#111720;overflow:hidden;transition:transform .2s,border-color .2s}
-.asset:hover{transform:translateY(-2px);border-color:#455873}
 .asset-preview{height:130px;background:#0a0e14;display:grid;place-items:center;position:relative;overflow:hidden}
 .asset-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.asset-preview video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .asset-preview .ph{color:#4d5f77}.asset-preview .ph svg{width:28px;height:28px}
-.asset-preview.web{background:linear-gradient(135deg,#15243a,#08101a)}
-.asset-preview.web .ph{color:#3a546f}
+.asset-preview.web{background:linear-gradient(135deg,#131e2d,#0b1118);padding:10px}
 .asset-preview.image{background:linear-gradient(135deg,#1a2330,#0d1318)}
+.asset-preview.video{background:linear-gradient(135deg,#231630,#0d1017)}
+.video-play-badge{position:absolute;inset:0;margin:auto;width:34px;height:34px;border-radius:50%;background:rgba(15,23,42,.78);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(4px);display:grid;place-items:center;color:#fff;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.video-play-badge svg{width:14px;height:14px;margin-left:2px}
+.web-preview-box{width:100%;height:100%;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(21,31,45,.5);display:flex;flex-direction:column;overflow:hidden}
+.web-preview-header{height:18px;background:rgba(0,0,0,.25);display:flex;align-items:center;gap:4px;padding:0 8px}
+.web-preview-dot{width:5px;height:5px;border-radius:50%;background:#48576b}
+.web-preview-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px}
+.web-favicon{width:22px;height:22px;border-radius:4px;flex:none}
+.web-host{font-size:11px;color:#8ba2bc;font-family:var(--mono);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .asset-badge{position:absolute;top:8px;right:8px;padding:3px 7px;border-radius:6px;
   background:rgba(9,12,17,.82);border:1px solid rgba(255,255,255,.1);font-size:10px;color:#c6d2e0}
 .asset-meta{padding:13px}
@@ -725,6 +733,7 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
             <button class="active" data-filter="all">全部</button>
             <button data-filter="web">网页</button>
             <button data-filter="image">图片</button>
+            <button data-filter="video">视频</button>
             <button data-filter="starred">已收藏</button>
           </div>
           <input class="search" id="libSearch" placeholder="搜索名称或网址">
@@ -732,9 +741,9 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>
             <span>添加网页</span>
           </button>
-          <button class="btn primary" id="addMediaBtn">
+          <button class="btn primary" id="addMediaBtn" title="上传本地图片或视频（支持多选）">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            <span>上传图片</span>
+            <span>上传</span>
           </button>
         </div>
         <div class="asset-grid" id="libGrid"></div>
@@ -1390,14 +1399,33 @@ async function loadLibrary() {
       name: m.name,
       sub: (m.size / 1024 / 1024).toFixed(1) + ' MB',
       url: kind === 'video' ? location.origin + raw : location.origin + '/view/image/' + encodeURIComponent(m.name),
+      rawUrl: location.origin + raw,
       thumbUrl: kind === 'video' ? null : location.origin + raw,
       starred: false,
     });
   }
   for (const b of bms) {
-    // 媒体文件的收藏地址不重复列出
     if (b.url.includes('/view/image/') || b.url.includes('/media/')) continue;
-    items.push({ type: 'web', name: b.name, sub: b.url, url: b.url, thumbUrl: null, starred: true, isBookmark: true });
+    let host = '';
+    let faviconUrl = '';
+    try {
+      const u = new URL(b.url);
+      host = u.hostname;
+      faviconUrl = `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
+    } catch {
+      host = b.url;
+    }
+    items.push({
+      type: 'web',
+      name: b.name,
+      sub: b.url,
+      url: b.url,
+      host,
+      faviconUrl,
+      thumbUrl: null,
+      starred: true,
+      isBookmark: true,
+    });
   }
   libItems = items;
   return items;
@@ -1423,6 +1451,7 @@ function renderLibrary() {
   const items = libItems.filter((it) => {
     if (libFilter === 'web' && it.type !== 'web') return false;
     if (libFilter === 'image' && it.type !== 'image') return false;
+    if (libFilter === 'video' && it.type !== 'video') return false;
     if (libFilter === 'starred' && !it.starred) return false;
     if (libSearchText) return (it.name + ' ' + it.sub).toLowerCase().includes(libSearchText);
     return true;
@@ -1437,46 +1466,70 @@ function renderLibrary() {
   for (const it of items) {
     const el = document.createElement('article');
     el.className = 'asset';
-    el.setAttribute('role', 'button');
-    el.tabIndex = 0;
 
-    const previewClass = it.type === 'web' ? 'asset-preview web' : 'asset-preview image';
-    const previewInner = it.thumbUrl
-      ? '<img loading="lazy" alt="">'
-      : '<span class="ph">' + (it.type === 'web' ? SVG.link : it.type === 'video' ? SVG.video : SVG.image) + '</span>';
     const badge = it.type === 'web' ? '网页' : it.type === 'video' ? '视频' : '图片';
+    let previewInner = '';
+
+    if (it.type === 'image') {
+      previewInner = `<div class="asset-preview image"><img loading="lazy" alt="" src="${it.thumbUrl}"><span class="asset-badge">${badge}</span></div>`;
+    } else if (it.type === 'video') {
+      previewInner = `<div class="asset-preview video">
+        <video src="${it.rawUrl}#t=0.5" preload="metadata" muted playsinline></video>
+        <span class="video-play-badge"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg></span>
+        <span class="asset-badge">${badge}</span>
+      </div>`;
+    } else {
+      previewInner = `<div class="asset-preview web">
+        <div class="web-preview-box">
+          <div class="web-preview-header">
+            <span class="web-preview-dot"></span><span class="web-preview-dot"></span><span class="web-preview-dot"></span>
+          </div>
+          <div class="web-preview-body">
+            <img class="web-favicon" src="${it.faviconUrl}" alt="" onerror="this.style.display='none'">
+            <span class="web-host">${escapeHtml(it.host)}</span>
+          </div>
+        </div>
+        <span class="asset-badge">${badge}</span>
+      </div>`;
+    }
 
     el.innerHTML =
-      '<div class="' + previewClass + '">' + previewInner
-        + '<span class="asset-badge">' + badge + '</span>'
-      + '</div>'
-      + '<div class="asset-meta"><b></b><span></span></div>'
+      previewInner
+      + '<div class="asset-meta"><b title="' + escapeHtml(it.name) + '">' + escapeHtml(it.name) + '</b><span title="' + escapeHtml(it.sub) + '">' + escapeHtml(it.sub) + '</span></div>'
       + '<div class="asset-foot">'
         + '<button class="btn openAsset">打开</button>'
         + '<button class="btn primary castAsset">投放</button>'
       + '</div>'
       + '<button class="del" title="' + (it.isBookmark ? '取消收藏' : '删除') + '">' + SVG.trash + '</button>';
 
-    if (it.thumbUrl) el.querySelector('img').src = it.thumbUrl;
-    el.querySelector('.asset-meta b').textContent = it.name;
-    el.querySelector('.asset-meta span').textContent = it.sub;
+    el.querySelector('.castAsset').onclick = async (e) => {
+      e.stopPropagation();
+      const typeName = it.type === 'web' ? '网页' : it.type === 'video' ? '视频' : '图片';
+      const ok = await uiConfirm(`确定将此${typeName}【${it.name}】投放到大屏展示吗？`, {
+        title: '确认投放',
+        ok: '立即投放',
+      });
+      if (!ok) return;
+      await push(it.url, 'new');
+    };
 
-    const go = () => push(it.url, it.isBookmark ? 'tab' : undefined);
-    el.onclick = go;
-    el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
-    el.querySelector('.castAsset').onclick = (e) => { e.stopPropagation(); go(); };
-    el.querySelector('.openAsset').onclick = (e) => { e.stopPropagation(); window.open(it.url, '_blank'); };
+    el.querySelector('.openAsset').onclick = (e) => {
+      e.stopPropagation();
+      window.open(it.url, '_blank');
+    };
+
     el.querySelector('.del').onclick = (e) => {
       e.stopPropagation();
       if (it.isBookmark) removeBookmark(it.url, it.name);
       else deleteMedia(it.name);
     };
+
     box.appendChild(el);
   }
 
   const addCard = document.createElement('button');
   addCard.className = 'add-card';
-  addCard.innerHTML = '<i>＋</i><b>添加内容</b>';
+  addCard.innerHTML = '<i>＋</i><b>上传素材</b>';
   addCard.onclick = pick;
   box.appendChild(addCard);
 }
@@ -1531,9 +1584,20 @@ function renderLibPop() {
 
     const thumb = document.createElement('span');
     thumb.className = 'lib-pop-thumb';
-    if (it.thumbUrl) {
+    if (it.type === 'image' && it.thumbUrl) {
       const im = document.createElement('img');
       im.loading = 'lazy'; im.alt = ''; im.src = it.thumbUrl;
+      thumb.appendChild(im);
+    } else if (it.type === 'video' && it.rawUrl) {
+      const vd = document.createElement('video');
+      vd.src = it.rawUrl + '#t=0.5';
+      vd.preload = 'metadata'; vd.muted = true; vd.playsInline = true;
+      vd.style.cssText = 'width:100%;height:100%;object-fit:cover;pointer-events:none;border-radius:4px;';
+      thumb.appendChild(vd);
+    } else if (it.type === 'web' && it.faviconUrl) {
+      const im = document.createElement('img');
+      im.loading = 'lazy'; im.alt = ''; im.src = it.faviconUrl;
+      im.onerror = () => { thumb.innerHTML = SVG.link; };
       thumb.appendChild(im);
     } else {
       thumb.innerHTML = it.type === 'web' ? SVG.link : it.type === 'video' ? SVG.video : SVG.image;
