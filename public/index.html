@@ -231,22 +231,14 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .asset-preview img{width:100%;height:100%;object-fit:cover;display:block}
 .asset-preview video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .asset-preview .ph{color:#4d5f77}.asset-preview .ph svg{width:28px;height:28px}
-.asset-preview.web{background:radial-gradient(circle at 50% 20%,#15263d 0%,#0c121b 85%);padding:10px}
+.asset-preview.web{background:linear-gradient(135deg,#131e2d,#0b1017)}
 .asset-preview.image{background:linear-gradient(135deg,#1a2330,#0d1318)}
 .asset-preview.video{background:linear-gradient(135deg,#231630,#0d1017)}
 .video-play-badge{position:absolute;inset:0;margin:auto;width:34px;height:34px;border-radius:50%;background:rgba(15,23,42,.78);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(4px);display:grid;place-items:center;color:#fff;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.5)}
 .video-play-badge svg{width:14px;height:14px;margin-left:2px}
-.web-preview-box{width:100%;height:100%;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(18,27,39,.65);display:flex;flex-direction:column;justify-content:space-between;padding:8px 10px;position:relative;overflow:hidden}
-.web-preview-box::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(56,139,253,.08) 1px,transparent 1px);background-size:10px 10px;pointer-events:none}
-.web-preview-top{display:flex;align-items:center;gap:6px;position:relative;z-index:1}
-.web-preview-dot{width:5px;height:5px;border-radius:50%;background:#388bfd;box-shadow:0 0 6px #388bfd;flex:none}
-.web-host-tag{font-size:10px;color:#7995b5;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 20px)}
-.web-preview-center{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1}
-.web-vector-badge{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1d4ed8,#2563eb);border:1px solid rgba(255,255,255,.18);box-shadow:0 6px 16px rgba(37,99,235,.25);display:grid;place-items:center;color:#fff;flex:none}
-.web-vector-badge svg{width:20px;height:20px}
-.web-meta-brief{min-width:0;display:flex;flex-direction:column;gap:2px}
-.web-brief-name{font-size:12px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.web-brief-scheme{font-size:9.5px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;font-family:var(--mono)}
+.web-link-icon{width:48px;height:48px;border-radius:12px;background:rgba(56,139,253,.1);border:1px solid rgba(56,139,253,.22);display:grid;place-items:center;color:#58a6ff;transition:transform .2s,background .2s,border-color .2s}
+.asset:hover .web-link-icon{transform:scale(1.08);background:rgba(56,139,253,.18);border-color:rgba(56,139,253,.4)}
+.web-link-icon svg{width:24px;height:24px}
 .asset-badge{position:absolute;top:8px;right:8px;padding:3px 7px;border-radius:6px;
   background:rgba(9,12,17,.82);border:1px solid rgba(255,255,255,.1);font-size:10px;color:#c6d2e0}
 .asset-meta{padding:13px}
@@ -1485,21 +1477,7 @@ function renderLibrary() {
       </div>`;
     } else {
       previewInner = `<div class="asset-preview web">
-        <div class="web-preview-box">
-          <div class="web-preview-top">
-            <span class="web-preview-dot"></span>
-            <span class="web-host-tag">${escapeHtml(it.host)}</span>
-          </div>
-          <div class="web-preview-center">
-            <div class="web-vector-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3M7 9h10M7 13h6"/></svg>
-            </div>
-            <div class="web-meta-brief">
-              <span class="web-brief-name">${escapeHtml(it.name)}</span>
-              <span class="web-brief-scheme">${escapeHtml((it.host || '').split(':')[0] || 'WEB')}</span>
-            </div>
-          </div>
-        </div>
+        <div class="web-link-icon">${SVG.link}</div>
         <span class="asset-badge">${badge}</span>
       </div>`;
     }
