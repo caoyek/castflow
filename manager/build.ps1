@@ -2,6 +2,7 @@
 # 使用 Windows 自带的 csc.exe 编译，零额外依赖
 
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $Root = $PSScriptRoot
 
 $Csc = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
@@ -9,7 +10,7 @@ if (-not (Test-Path $Csc)) {
     $Csc = (Get-Command csc.exe -ErrorAction SilentlyContinue).Source
 }
 if (-not $Csc) {
-    throw "未找到 C# 编译器 csc.exe"
+    throw "C# compiler csc.exe not found"
 }
 
 $Output = Join-Path $Root "CastFlowManager.exe"
@@ -35,13 +36,13 @@ $NetDir = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319"
 $IconFile = Join-Path $Root "app.ico"
 $IconArg = if (Test-Path $IconFile) { "/win32icon:$IconFile" } else { "" }
 
-Write-Host "正在使用系统 C# 编译器构建 CastFlowManager.exe ..." -ForegroundColor Cyan
+Write-Host "Building CastFlowManager.exe with csc.exe..." -ForegroundColor Cyan
 
 & $Csc /target:winexe /optimize+ $IconArg "/lib:$WpfDir,$NetDir" "/out:$Output" $RefArgs $Source
 
 if ($LASTEXITCODE -eq 0 -and (Test-Path $Output)) {
     $sizeKb = [math]::Round((Get-Item $Output).Length / 1KB, 1)
-    Write-Host "构建成功！产物：$Output ($sizeKb KB)" -ForegroundColor Green
+    Write-Host "Build success: $Output ($sizeKb KB)" -ForegroundColor Green
 } else {
-    throw "构建失败，退出码: $LASTEXITCODE"
+    throw "Build failed with exit code: $LASTEXITCODE"
 }

@@ -48,6 +48,11 @@ jobs:
         run: |
           Write-Host "Installing Inno Setup via Chocolatey..."
           choco install innosetup -y --no-progress
+          $innoDir = "C:\Program Files (x86)\Inno Setup 6"
+          if (Test-Path $innoDir) {
+            Write-Host "Adding $innoDir to GITHUB_PATH"
+            "$innoDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
 
       - name: Compile Installer with Inno Setup
         shell: powershell
