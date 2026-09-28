@@ -373,6 +373,85 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 #toast.ok{border-left-color:var(--green)}
 #toast.bad{border-left-color:var(--red)}
 
+/* ---------- 排期页面 ---------- */
+.schedule-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.sched-summary-card{display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 16px;min-height:44px}
+.sched-status-badge{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.sched-status-badge .sched-dot{width:8px;height:8px;border-radius:50%;background:#526071;box-shadow:0 0 6px rgba(82,96,113,.4);flex:none;transition:all .3s}
+.sched-status-badge.active{color:#87d3a5}
+.sched-status-badge.active .sched-dot{background:#4ade80;box-shadow:0 0 10px #4ade80;animation:pulseDot 2s infinite}
+@keyframes pulseDot{0%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}100%{transform:scale(1);opacity:1}}
+.sched-clock{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);border-left:1px solid var(--line);padding-left:14px;font-variant-numeric:tabular-nums}
+.sched-clock svg{width:14px;height:14px}
+.sched-head-actions{display:flex;align-items:center;gap:10px}
+
+/* 开关组件 */
+.sched-switch{position:relative;display:inline-flex;align-items:center;cursor:pointer;gap:8px;user-select:none;font-size:12.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:6px 12px;height:var(--ctl);transition:all .2s}
+.sched-switch:hover{border-color:var(--line2);color:var(--text)}
+.sched-switch input{position:absolute;opacity:0;width:0;height:0}
+.sched-slider{width:32px;height:18px;background:#253041;border-radius:20px;position:relative;transition:background .25s;flex:none}
+.sched-slider:before{content:"";position:absolute;width:14px;height:14px;left:2px;top:2px;background:#8b9bb4;border-radius:50%;transition:transform .25s,background .25s}
+.sched-switch input:checked + .sched-slider{background:#2563eb}
+.sched-switch input:checked + .sched-slider:before{transform:translateX(14px);background:#fff}
+.sched-switch.active{color:var(--text);border-color:var(--blue-line);background:var(--blue-soft)}
+
+/* 24 小时排期甘特图时间轴 */
+.sched-timeline-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 20px 14px;margin-bottom:20px;box-shadow:var(--shadow)}
+.sched-timeline-box{position:relative;height:36px;background:#141b24;border:1px solid var(--line2);border-radius:8px;overflow:visible;margin-bottom:8px}
+.sched-timeline-track{position:relative;width:100%;height:100%;border-radius:7px;overflow:hidden;background:#151d28}
+.sched-time-block{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:rgba(255,255,255,.9);cursor:pointer;transition:filter .15s;overflow:hidden;white-space:nowrap;padding:0 6px}
+.sched-time-block:hover{filter:brightness(1.2);z-index:2}
+.sched-time-block.type-web{background:linear-gradient(135deg,rgba(56,139,253,.65),rgba(31,111,235,.85));border-right:1px solid rgba(255,255,255,.2)}
+.sched-time-block.type-video{background:linear-gradient(135deg,rgba(168,85,247,.65),rgba(137,87,229,.85));border-right:1px solid rgba(255,255,255,.2)}
+.sched-time-block.type-image{background:linear-gradient(135deg,rgba(16,185,129,.65),rgba(5,150,105,.85));border-right:1px solid rgba(255,255,255,.2)}
+.sched-time-block.type-standby{background:linear-gradient(135deg,rgba(71,85,105,.65),rgba(51,65,85,.85));border-right:1px solid rgba(255,255,255,.2)}
+.sched-timeline-cursor{position:absolute;top:-6px;bottom:-6px;width:2px;background:#f43f5e;z-index:5;pointer-events:none;transform:translateX(-50%);box-shadow:0 0 8px #f43f5e;transition:left .5s ease}
+.sched-timeline-cursor:before{content:"";position:absolute;top:0;left:50%;transform:translate(-50%,-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #f43f5e}
+.sched-cursor-bubble{position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:#f43f5e;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;font-variant-numeric:tabular-nums;box-shadow:0 2px 6px rgba(244,63,94,.4)}
+.sched-timeline-scale{display:flex;justify-content:space-between;color:var(--faint);font-size:10px;font-variant-numeric:tabular-nums;padding:0 2px}
+
+/* 排期列表 */
+.sched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.sched-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;transition:border-color .2s,box-shadow .2s;position:relative}
+.sched-card:hover{border-color:var(--line2)}
+.sched-card.active{border-color:#388bfd;box-shadow:0 0 24px rgba(56,139,253,.15);background:linear-gradient(180deg,#151e2c,#111720)}
+.sched-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.sched-time-range{font-size:17px;font-weight:750;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--text);display:flex;align-items:center;gap:8px}
+.sched-card-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;flex:none}
+.sched-card-badge.type-web{background:rgba(56,139,253,.14);color:#79b8ff;border:1px solid rgba(56,139,253,.3)}
+.sched-card-badge.type-video{background:rgba(168,85,247,.14);color:#d8b4fe;border:1px solid rgba(168,85,247,.3)}
+.sched-card-badge.type-image{background:rgba(16,185,129,.14);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.sched-card-badge.type-standby{background:rgba(100,116,139,.18);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
+.sched-active-tag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:#4ade80;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.28);padding:2px 7px;border-radius:4px;font-weight:600}
+.sched-active-tag .dot{width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80}
+.sched-card-body{min-width:0}
+.sched-card-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sched-card-target{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
+.sched-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
+.sched-card-foot-left{display:flex;align-items:center;gap:6px}
+.sched-card-foot-right{display:flex;align-items:center;gap:6px}
+.sched-card-foot button{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:#151c26;color:#9dacbd;font-size:11.5px;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.sched-card-foot button:hover{background:#1d2734;border-color:var(--line2);color:#fff}
+.sched-card-foot button.danger:hover{background:#dc2626;border-color:#dc2626;color:#fff}
+.sched-card.disabled{opacity:.45}
+
+/* 空状态 */
+.sched-empty{grid-column:1/-1;border:1px dashed var(--line2);border-radius:14px;padding:48px 20px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:12px}
+.sched-empty svg{width:40px;height:40px;color:var(--faint);opacity:.6}
+
+/* 弹窗表单样式 */
+.sched-form-group{margin-bottom:15px}
+.sched-form-label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px}
+.sched-form-row{display:flex;align-items:center;gap:10px}
+.sched-form-input{width:100%;height:38px;padding:0 12px;background:#151c26;border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:13px;transition:border-color .15s}
+.sched-form-input:focus{border-color:var(--blue);outline:none}
+.sched-segmented{display:flex;background:#10151e;border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px}
+.sched-seg-btn{flex:1;height:32px;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.sched-seg-btn.active{background:#223046;color:#7fb1f6;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.sched-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sched-tag{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:6px;background:#151d28;color:#94a3b8;cursor:pointer;transition:all .15s}
+.sched-tag:hover{border-color:var(--blue);color:#79b8ff}
+
 /* ---------- 窄屏设备条 ---------- */
 .device-inline{display:none;align-items:center;justify-content:space-between;gap:12px;
   padding:12px 14px;margin-bottom:14px;border:1px solid var(--line);border-radius:12px;background:#111721}
@@ -423,7 +502,7 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
   .segmented{overflow-x:auto}
   .modal-root{padding:12px;align-items:end}
   .modal{width:100%;border-radius:16px 16px 0 0}
-  .mobile-nav{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;
+  .mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;
     height:64px;border-top:1px solid var(--line);background:rgba(12,16,22,.96);backdrop-filter:blur(16px);z-index:20}
   .mobile-nav button{border:0;background:none;color:#6f7e91;font-size:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
   .mobile-nav button.active{color:#7fb1f6}
@@ -446,6 +525,10 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
       <button class="nav-btn active" data-view="cast">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
         <span>投放</span>
+      </button>
+      <button class="nav-btn" data-view="schedule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+        <span>排期</span>
       </button>
       <button class="nav-btn" data-view="library">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg>
@@ -583,6 +666,58 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
         </div>
       </section>
 
+      <!-- ---------- 排期页面 ---------- -->
+      <section class="view" id="view-schedule">
+        <div class="schedule-head">
+          <div class="sched-summary-card">
+            <div class="sched-status-badge" id="schedActiveBadge">
+              <span class="sched-dot"></span>
+              <span id="schedActiveText">—</span>
+            </div>
+            <div class="sched-clock">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span id="schedClockText">00:00</span>
+            </div>
+          </div>
+
+          <div class="sched-head-actions">
+            <label class="sched-switch" id="schedSwitchWrap">
+              <input type="checkbox" id="schedMasterToggle">
+              <span class="sched-slider"></span>
+              <span id="schedToggleLabel">排期已暂停</span>
+            </label>
+            <button class="btn" id="schedResumeBtn" title="恢复当前排期">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>恢复排期</span>
+            </button>
+            <button class="btn primary" id="schedAddBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              <span>新建时段</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="sched-timeline-card">
+          <div class="sched-timeline-box">
+            <div class="sched-timeline-track" id="schedTimelineTrack"></div>
+            <div class="sched-timeline-cursor" id="schedTimelineCursor" style="left:0%">
+              <span class="sched-cursor-bubble" id="schedCursorTime">00:00</span>
+            </div>
+          </div>
+          <div class="sched-timeline-scale">
+            <span>00:00</span>
+            <span>04:00</span>
+            <span>08:00</span>
+            <span>12:00</span>
+            <span>16:00</span>
+            <span>20:00</span>
+            <span>24:00</span>
+          </div>
+        </div>
+
+        <div class="sched-grid" id="schedGrid"></div>
+      </section>
+
       <!-- ---------- 内容库 ---------- -->
       <section class="view" id="view-library">
         <div class="toolbar">
@@ -685,6 +820,9 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 <nav class="mobile-nav">
   <button class="active" data-view="cast">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/></svg>投放
+  </button>
+  <button data-view="schedule">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>排期
   </button>
   <button data-view="library">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg>内容库
@@ -834,7 +972,7 @@ function openForm({ title, fields, ok = '确定', onOk }) {
 }
 
 /* ---------- 视图切换 ---------- */
-const TITLES = { cast: '投放', library: '内容库', devices: '设备管理' };
+const TITLES = { cast: '投放', schedule: '排期', library: '内容库', devices: '设备管理' };
 let currentDeviceName = '大屏设备';
 
 function showView(v) {
@@ -847,6 +985,7 @@ function showView(v) {
   else { stopShotTimer(); }
   if (v === 'library') refreshLibrary();
   else if (v === 'devices') refreshDevices();
+  else if (v === 'schedule') refreshSchedule();
   window.scrollTo({ top: 0 });
 }
 
@@ -1588,6 +1727,429 @@ document.addEventListener('drop', (e) => {
   if (files.length) uploadFiles(files);
 });
 
+/* ---------- 排期管理 ---------- */
+const escapeHtml = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+let currentSchedule = { enabled: false, rules: [] };
+
+async function refreshSchedule() {
+  try {
+    const res = await (await fetch('/api/schedule')).json();
+    if (res && res.ok) {
+      currentSchedule = {
+        enabled: !!res.enabled,
+        rules: Array.isArray(res.rules) ? res.rules : [],
+      };
+      renderScheduleView(res);
+    }
+  } catch (err) {
+    console.error('获取排期失败:', err);
+  }
+}
+
+function timeToMinutes(t) {
+  if (!t || !t.includes(':')) return 0;
+  const parts = t.split(':').map(Number);
+  return (parts[0] || 0) * 60 + (parts[1] || 0);
+}
+
+function renderScheduleView(data) {
+  const isEnabled = !!data.enabled;
+  const rules = Array.isArray(data.rules) ? data.rules : [];
+  const activeId = data.activeRuleId;
+  const nowTime = data.nowTime || '--:--';
+
+  $('schedClockText').textContent = nowTime;
+  const masterToggle = $('schedMasterToggle');
+  const switchWrap = $('schedSwitchWrap');
+  masterToggle.checked = isEnabled;
+  switchWrap.classList.toggle('active', isEnabled);
+  $('schedToggleLabel').textContent = isEnabled ? '排期运行中' : '排期已暂停';
+
+  const badge = $('schedActiveBadge');
+  const badgeText = $('schedActiveText');
+  const activeRule = rules.find((r) => r.id === activeId);
+
+  if (isEnabled && activeRule) {
+    badge.className = 'sched-status-badge active';
+    badgeText.textContent = `正在生效 · ${activeRule.timeStart}-${activeRule.timeEnd} ${activeRule.name || ''}`;
+  } else if (isEnabled) {
+    badge.className = 'sched-status-badge';
+    badgeText.textContent = '当前时刻无匹配排期';
+  } else {
+    badge.className = 'sched-status-badge';
+    badgeText.textContent = '排期已暂停';
+  }
+
+  renderScheduleTimeline(rules, activeId, isEnabled, nowTime);
+  renderScheduleCards(rules, activeId, isEnabled);
+}
+
+function renderScheduleTimeline(rules, activeId, isEnabled, nowTime) {
+  const track = $('schedTimelineTrack');
+  track.innerHTML = '';
+
+  for (const rule of rules) {
+    if (rule.enabled === false) continue;
+    const startM = timeToMinutes(rule.timeStart);
+    const endM = timeToMinutes(rule.timeEnd);
+    const isActive = isEnabled && rule.id === activeId;
+
+    const createBlock = (leftPct, widthPct) => {
+      const el = document.createElement('div');
+      el.className = `sched-time-block type-${rule.type}` + (isActive ? ' active' : '');
+      el.style.left = leftPct + '%';
+      el.style.width = widthPct + '%';
+      el.title = `${rule.timeStart} - ${rule.timeEnd} · ${rule.name || rule.type}`;
+      el.textContent = rule.name || (rule.type === 'web' ? '网页' : rule.type === 'video' ? '视频' : rule.type === 'image' ? '图片' : '待机');
+      el.onclick = () => openScheduleModal(rule);
+      return el;
+    };
+
+    if (startM < endM) {
+      const left = (startM / 1440) * 100;
+      const width = ((endM - startM) / 1440) * 100;
+      track.appendChild(createBlock(left, width));
+    } else if (startM > endM) {
+      const left1 = (startM / 1440) * 100;
+      const width1 = ((1440 - startM) / 1440) * 100;
+      track.appendChild(createBlock(left1, width1));
+
+      const left2 = 0;
+      const width2 = (endM / 1440) * 100;
+      track.appendChild(createBlock(left2, width2));
+    }
+  }
+
+  const nowM = timeToMinutes(nowTime);
+  const cursorLeft = (nowM / 1440) * 100;
+  $('schedTimelineCursor').style.left = cursorLeft + '%';
+  $('schedCursorTime').textContent = nowTime;
+}
+
+function renderScheduleCards(rules, activeId, isEnabled) {
+  const grid = $('schedGrid');
+  grid.innerHTML = '';
+
+  if (!rules.length) {
+    grid.innerHTML = `
+      <div class="sched-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div>暂无排期时段，点击右上角「新建时段」添加</div>
+      </div>
+    `;
+    return;
+  }
+
+  const sorted = [...rules].sort((a, b) => timeToMinutes(a.timeStart) - timeToMinutes(b.timeStart));
+
+  for (const rule of sorted) {
+    const isActive = isEnabled && rule.id === activeId;
+    const isDisabled = rule.enabled === false;
+
+    const card = document.createElement('div');
+    card.className = 'sched-card' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
+
+    const typeLabels = { web: '网页看板', video: '视频播放', image: '图片展播', standby: '黑屏待机' };
+    const typeIcons = {
+      web: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+      video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
+      image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+      standby: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+    };
+
+    const targetDisplay = rule.type === 'standby' ? '黑屏待机' : (rule.target || '未设置目标');
+
+    card.innerHTML = `
+      <div class="sched-card-top">
+        <div class="sched-time-range">
+          <span>${rule.timeStart || '--:--'} — ${rule.timeEnd || '--:--'}</span>
+          ${isActive ? '<span class="sched-active-tag"><i class="dot"></i>正在播放</span>' : ''}
+        </div>
+        <span class="sched-card-badge type-${rule.type}">
+          ${typeIcons[rule.type] || ''}
+          <span>${typeLabels[rule.type] || rule.type}</span>
+        </span>
+      </div>
+
+      <div class="sched-card-body">
+        <div class="sched-card-name">${escapeHtml(rule.name || typeLabels[rule.type] || '未命名')}</div>
+        <div class="sched-card-target" title="${escapeHtml(targetDisplay)}">${escapeHtml(targetDisplay)}</div>
+      </div>
+
+      <div class="sched-card-foot">
+        <div class="sched-card-foot-left">
+          <label class="sched-switch" style="height:30px;padding:2px 8px;font-size:11px" title="单条启用/停用">
+            <input type="checkbox" class="rule-toggle" ${!isDisabled ? 'checked' : ''}>
+            <span class="sched-slider" style="width:26px;height:15px"></span>
+            <span>${!isDisabled ? '已启用' : '已停用'}</span>
+          </label>
+        </div>
+        <div class="sched-card-foot-right">
+          <button class="rule-test" title="立即在大屏试投此内容">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>测试</span>
+          </button>
+          <button class="rule-edit" title="编辑时段">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>编辑</span>
+          </button>
+          <button class="rule-del danger" title="删除此规则">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const toggleInput = card.querySelector('.rule-toggle');
+    toggleInput.onchange = async () => {
+      rule.enabled = toggleInput.checked;
+      await saveScheduleToServer();
+    };
+
+    card.querySelector('.rule-test').onclick = async () => {
+      try {
+        toast('正在大屏测试投屏…');
+        const res = await api('/api/schedule/test', {
+          method: 'POST',
+          body: JSON.stringify({ rule }),
+        });
+        if (res.ok) toast('已推送到大屏', 'ok');
+      } catch (err) {
+        toast('测试失败: ' + err.message, 'bad');
+      }
+    };
+
+    card.querySelector('.rule-edit').onclick = () => openScheduleModal(rule);
+
+    card.querySelector('.rule-del').onclick = async () => {
+      const ok = await uiConfirm(`确定删除时段【${rule.timeStart} - ${rule.timeEnd}】吗？`, { danger: true });
+      if (!ok) return;
+      currentSchedule.rules = currentSchedule.rules.filter((r) => r.id !== rule.id);
+      await saveScheduleToServer();
+      toast('已删除', 'ok');
+    };
+
+    grid.appendChild(card);
+  }
+}
+
+async function saveScheduleToServer() {
+  try {
+    const res = await api('/api/schedule', {
+      method: 'POST',
+      body: JSON.stringify(currentSchedule),
+    });
+    if (res.ok) {
+      renderScheduleView(res);
+    }
+  } catch (err) {
+    toast('保存排期失败: ' + err.message, 'bad');
+  }
+}
+
+async function openScheduleModal(editRule) {
+  const isEdit = !!editRule;
+  const r = editRule ? { ...editRule } : {
+    id: 'rule_' + Date.now(),
+    name: '',
+    timeStart: '09:00',
+    timeEnd: '12:00',
+    type: 'web',
+    target: '',
+    enabled: true,
+  };
+
+  let mediaList = [];
+  let bookmarkList = [];
+  try {
+    mediaList = await (await fetch('/api/media')).json();
+    bookmarkList = await (await fetch('/api/bookmarks')).json();
+  } catch {}
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="sched-form-group">
+      <label class="sched-form-label">时段范围</label>
+      <div class="sched-form-row">
+        <input type="time" class="sched-form-input" id="schedFormStart" value="${r.timeStart || '09:00'}">
+        <span style="color:var(--muted)">至</span>
+        <input type="time" class="sched-form-input" id="schedFormEnd" value="${r.timeEnd || '12:00'}">
+      </div>
+    </div>
+
+    <div class="sched-form-group">
+      <label class="sched-form-label">内容类型</label>
+      <div class="sched-segmented" id="schedFormType">
+        <button type="button" class="sched-seg-btn ${r.type === 'web' ? 'active' : ''}" data-type="web">🌐 网页看板</button>
+        <button type="button" class="sched-seg-btn ${r.type === 'video' ? 'active' : ''}" data-type="video">🎬 视频播放</button>
+        <button type="button" class="sched-seg-btn ${r.type === 'image' ? 'active' : ''}" data-type="image">🖼️ 图片展播</button>
+        <button type="button" class="sched-seg-btn ${r.type === 'standby' ? 'active' : ''}" data-type="standby">🌙 黑屏待机</button>
+      </div>
+    </div>
+
+    <div class="sched-form-group" id="schedTargetGroup">
+      <label class="sched-form-label" id="schedTargetLabel">目标网址</label>
+      <div id="schedTargetControl"></div>
+    </div>
+
+    <div class="sched-form-group">
+      <label class="sched-form-label">时段名称（可选）</label>
+      <input class="sched-form-input" id="schedFormName" placeholder="例如：上午业务看板、午休宣传" value="${escapeHtml(r.name || '')}">
+    </div>
+  `;
+
+  let currentType = r.type || 'web';
+
+  const updateTargetField = () => {
+    const targetGroup = wrap.querySelector('#schedTargetGroup');
+    const label = wrap.querySelector('#schedTargetLabel');
+    const ctrl = wrap.querySelector('#schedTargetControl');
+    ctrl.innerHTML = '';
+
+    if (currentType === 'standby') {
+      targetGroup.style.display = 'none';
+      return;
+    }
+    targetGroup.style.display = 'block';
+
+    if (currentType === 'web') {
+      label.textContent = '目标网址';
+      const input = document.createElement('input');
+      input.className = 'sched-form-input';
+      input.id = 'schedFormTarget';
+      input.placeholder = 'https:// 或 http://...';
+      input.value = r.type === 'web' ? (r.target || '') : '';
+      ctrl.appendChild(input);
+
+      if (bookmarkList && bookmarkList.length) {
+        const tagsWrap = document.createElement('div');
+        tagsWrap.className = 'sched-tags';
+        for (const b of bookmarkList) {
+          const tag = document.createElement('span');
+          tag.className = 'sched-tag';
+          tag.textContent = b.name || b.url;
+          tag.onclick = () => { input.value = b.url; };
+          tagsWrap.appendChild(tag);
+        }
+        ctrl.appendChild(tagsWrap);
+      }
+    } else if (currentType === 'video') {
+      label.textContent = '选择本地视频';
+      const videos = (mediaList || []).filter((m) => /\.(mp4|webm|mov)$/i.test(m.name));
+      const sel = document.createElement('select');
+      sel.className = 'sched-form-input';
+      sel.id = 'schedFormTarget';
+
+      if (!videos.length) {
+        sel.innerHTML = '<option value="">(媒体库中暂无视频，请先在内容库上传)</option>';
+      } else {
+        sel.innerHTML = videos.map((v) => `<option value="${escapeHtml(v.name)}" ${r.target === v.name ? 'selected' : ''}>${escapeHtml(v.name)}</option>`).join('');
+      }
+      ctrl.appendChild(sel);
+    } else if (currentType === 'image') {
+      label.textContent = '选择本地图片';
+      const images = (mediaList || []).filter((m) => /\.(jpg|jpeg|png|webp|gif)$/i.test(m.name));
+      const sel = document.createElement('select');
+      sel.className = 'sched-form-input';
+      sel.id = 'schedFormTarget';
+
+      if (!images.length) {
+        sel.innerHTML = '<option value="">(媒体库中暂无图片，请先在内容库上传)</option>';
+      } else {
+        sel.innerHTML = images.map((img) => `<option value="${escapeHtml(img.name)}" ${r.target === img.name ? 'selected' : ''}>${escapeHtml(img.name)}</option>`).join('');
+      }
+      ctrl.appendChild(sel);
+    }
+  };
+
+  for (const btn of wrap.querySelectorAll('.sched-seg-btn')) {
+    btn.onclick = () => {
+      wrap.querySelectorAll('.sched-seg-btn').forEach((b) => b.classList.toggle('active', b === btn));
+      currentType = btn.dataset.type;
+      updateTargetField();
+    };
+  }
+
+  updateTargetField();
+
+  openModal({
+    title: isEdit ? '编辑排期时段' : '新建排期时段',
+    body: wrap,
+    foot: [
+      { label: '取消', onClick: () => closeModal() },
+      {
+        label: '保存',
+        primary: true,
+        onClick: async () => {
+          const sTime = wrap.querySelector('#schedFormStart').value;
+          const eTime = wrap.querySelector('#schedFormEnd').value;
+          if (!sTime || !eTime) {
+            toast('请完整填写起止时间', 'bad');
+            return;
+          }
+          const targetEl = wrap.querySelector('#schedFormTarget');
+          const targetVal = targetEl ? targetEl.value.trim() : '';
+
+          if (currentType !== 'standby' && !targetVal) {
+            toast('请填写或选择播放内容', 'bad');
+            return;
+          }
+
+          r.timeStart = sTime;
+          r.timeEnd = eTime;
+          r.type = currentType;
+          r.target = targetVal;
+          r.name = wrap.querySelector('#schedFormName').value.trim();
+
+          if (isEdit) {
+            const idx = currentSchedule.rules.findIndex((x) => x.id === r.id);
+            if (idx >= 0) currentSchedule.rules[idx] = r;
+            else currentSchedule.rules.push(r);
+          } else {
+            currentSchedule.rules.push(r);
+          }
+
+          closeModal();
+          await saveScheduleToServer();
+          toast('时段已保存', 'ok');
+        },
+      },
+    ],
+  });
+}
+
+$('schedMasterToggle').onchange = async () => {
+  const enabled = $('schedMasterToggle').checked;
+  try {
+    const res = await api('/api/schedule/toggle', {
+      method: 'POST',
+      body: JSON.stringify({ enabled }),
+    });
+    if (res.ok) {
+      currentSchedule.enabled = res.enabled;
+      renderScheduleView(res);
+      toast(res.enabled ? '排期已开启' : '排期已暂停', 'ok');
+    }
+  } catch (err) {
+    toast('切换失败: ' + err.message, 'bad');
+  }
+};
+
+$('schedResumeBtn').onclick = async () => {
+  try {
+    toast('正在切回排期…');
+    const res = await api('/api/schedule/resume', { method: 'POST' });
+    if (res.ok) {
+      renderScheduleView(res);
+      toast('已恢复当前排期播放', 'ok');
+    }
+  } catch (err) {
+    toast('恢复排期失败: ' + err.message, 'bad');
+  }
+};
+
+$('schedAddBtn').onclick = () => openScheduleModal();
+
 /* ---------- 按钮绑定 ---------- */
 $('fReload').onclick = () => busy($('fReload'), async () => {
   toast('重载中…');
@@ -1625,10 +2187,17 @@ for (const [id, path, label] of [
   refreshTopmost();
   loadLibrary();
   startShotTimer();
+  refreshSchedule();
 
   setInterval(refreshStatus, 5000);
   setInterval(refreshTabs, 10000);
   setInterval(refreshProcState, 6000);
+  setInterval(() => {
+    const scheduleView = $('view-schedule');
+    if (scheduleView && scheduleView.classList.contains('active')) {
+      refreshSchedule();
+    }
+  }, 5000);
 })();
 </script>
 </body>

@@ -26,6 +26,7 @@ const MEDIA_DIR = path.join(APP_ROOT, 'media');
 const CONFIG_FILE = path.join(APP_ROOT, 'config.json');
 const BOOKMARKS_FILE = path.join(APP_ROOT, 'bookmarks.json');
 const SETTINGS_FILE = path.join(APP_ROOT, 'settings.json');
+const SCHEDULE_FILE = path.join(APP_ROOT, 'schedule.json');
 const TOPMOST_PS = path.join(APP_ROOT, 'topmost.ps1');
 
 module.exports = {
@@ -36,5 +37,6 @@ module.exports = {
   CONFIG_FILE,
   BOOKMARKS_FILE,
   SETTINGS_FILE,
+  SCHEDULE_FILE,
   TOPMOST_PS,
 };

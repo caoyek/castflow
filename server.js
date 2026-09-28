@@ -15,6 +15,7 @@ const { BigScreen, ZOOM_STEPS } = require('./cdp');
 const chromeCtl = require('./chrome-ctl');
 const P = require('./paths');
 const CFG = require('./config');
+const scheduleMgr = require('./schedule');
 
 const ROOT = P.APP_ROOT;
 const PUBLIC_DIR = P.PUBLIC_DIR;
@@ -341,6 +342,7 @@ const server = http.createServer(async (req, res) => {
       if (typeof target !== 'string' || !target.trim()) {
         return json(res, 400, { error: '缺少 url' });
       }
+      scheduleMgr.markManualOverride();
       const url = target.trim();
       const started = Date.now();
       // mode=tab 走收藏夹那套：已开着就切过去，否则新开标签
@@ -530,6 +532,37 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, settings: s });
     }
 
+    // ---- 分时段排期设置与调度 ----
+    if (pathname === '/api/schedule' && req.method === 'GET') {
+      return json(res, 200, { ok: true, ...scheduleMgr.getStatus() });
+    }
+
+    if (pathname === '/api/schedule' && req.method === 'POST') {
+      const body = await readBody(req);
+      const saved = scheduleMgr.saveSchedule(body);
+      return json(res, 200, { ok: true, ...scheduleMgr.getStatus(), schedule: saved });
+    }
+
+    if (pathname === '/api/schedule/toggle' && req.method === 'POST') {
+      const { enabled } = await readBody(req);
+      const s = scheduleMgr.loadSchedule();
+      s.enabled = enabled !== undefined ? !!enabled : !s.enabled;
+      scheduleMgr.saveSchedule(s);
+      return json(res, 200, { ok: true, ...scheduleMgr.getStatus() });
+    }
+
+    if (pathname === '/api/schedule/resume' && req.method === 'POST') {
+      const r = await scheduleMgr.resumeSchedule(screen, PUBLIC_BASE);
+      return json(res, 200, { ...r, ...scheduleMgr.getStatus() });
+    }
+
+    if (pathname === '/api/schedule/test' && req.method === 'POST') {
+      const { rule } = await readBody(req);
+      if (!rule) return json(res, 400, { error: '缺少 rule' });
+      await scheduleMgr.testRule(rule, screen, PUBLIC_BASE);
+      return json(res, 200, { ok: true });
+    }
+
     // 图片展示页：同一个 HTML，靠前端解析路径里的文件名
     if (pathname.startsWith('/view/image/')) {
       return serveFile(req, res, path.join(PUBLIC_DIR, 'image.html'));
@@ -672,6 +705,19 @@ setInterval(async () => {
     console.log(`[自动恢复] 失败：${err.message}`);
   }
 }, 30 * 1000);
+
+// ---- 分时段排期调度巡检 ----
+// 每 15 秒检查一次时间段跨越点，自动驱动大屏无缝切换内容
+setInterval(async () => {
+  try {
+    const pid = await chromeCtl.findPidOnPort(CDP_PORT);
+    if (pid !== null) {
+      await scheduleMgr.checkScheduleTick(screen, PUBLIC_BASE, true);
+    }
+  } catch (err) {
+    // 巡检异常跳过
+  }
+}, 15 * 1000);
 
 // ---- 启动 ----
 server.on('error', (err) => {

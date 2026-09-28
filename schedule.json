@@ -1,0 +1,32 @@
+{
+  "enabled": false,
+  "rules": [
+    {
+      "id": "rule_default_1",
+      "name": "上午看板",
+      "timeStart": "09:00",
+      "timeEnd": "12:00",
+      "type": "web",
+      "target": "http://127.0.0.1:18089",
+      "enabled": true
+    },
+    {
+      "id": "rule_default_2",
+      "name": "午间视频",
+      "timeStart": "12:00",
+      "timeEnd": "14:00",
+      "type": "video",
+      "target": "",
+      "enabled": true
+    },
+    {
+      "id": "rule_default_3",
+      "name": "下午展播",
+      "timeStart": "14:00",
+      "timeEnd": "18:00",
+      "type": "image",
+      "target": "",
+      "enabled": true
+    }
+  ]
+}
