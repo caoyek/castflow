@@ -226,7 +226,7 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .search:focus{border-color:var(--blue)}
 
 .asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
-.asset{border:1px solid var(--line);border-radius:13px;background:#111720;overflow:hidden;transition:transform .2s,border-color .2s}
+.asset{position:relative;border:1px solid var(--line);border-radius:13px;background:#111720;overflow:hidden;transition:transform .2s,border-color .2s}
 .asset-preview{height:130px;background:#0a0e14;display:grid;place-items:center;position:relative;overflow:hidden}
 .asset-preview img{width:100%;height:100%;object-fit:cover;display:block}
 .asset-preview video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
@@ -245,7 +245,7 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .asset-foot .btn{height:33px;flex:1;font-size:11px;padding:0}
 .asset .del{position:absolute;top:8px;left:8px;width:26px;height:26px;display:grid;place-items:center;
   border:1px solid rgba(255,255,255,.12);border-radius:7px;background:rgba(9,12,17,.82);color:#c6d2e0;
-  opacity:0;transition:opacity .15s,background .15s,border-color .15s,color .15s}
+  opacity:0;transition:opacity .15s,background .15s,border-color .15s,color .15s;z-index:2}
 .asset .del svg{width:13px;height:13px}
 .asset:hover .del,.asset .del:focus-visible{opacity:1}
 .asset .del:hover{background:rgba(233,115,102,.9);border-color:transparent;color:#fff}
