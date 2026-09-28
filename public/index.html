@@ -476,7 +476,7 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .user-actions{display:flex;align-items:center;gap:6px}
 .user-actions .btn{height:30px;padding:0 10px;font-size:11.5px}
 
-/* ---------- 消息推送与 Webhook 机器人 ---------- */
+/* ---------- 消息推送与 Webhook 任务 ---------- */
 .msg-top-banner{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
 .msg-banner-info{display:flex;align-items:center;gap:14px}
 .msg-banner-icon{width:42px;height:42px;border-radius:11px;background:rgba(56,139,253,.12);border:1px solid rgba(56,139,253,.25);display:grid;place-items:center;color:#58a6ff;flex:none}
@@ -485,24 +485,30 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .msg-banner-text span{font-size:11.5px;color:var(--muted)}
 .msg-banner-actions{display:flex;gap:8px}
 
-.bot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;margin-bottom:20px}
-.bot-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s}
-.bot-card:hover{border-color:var(--line2)}
-.bot-card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:#0e131b}
-.bot-brand{display:flex;align-items:center;gap:10px}
-.bot-logo{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;flex:none}
-.bot-logo.wecom{background:linear-gradient(135deg,#1e6be5,#1551b8)}
-.bot-logo.ding{background:linear-gradient(135deg,#0089ff,#006cd4)}
-.bot-logo.feishu{background:linear-gradient(135deg,#00d6b9,#009e86)}
-.bot-logo.custom{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
-.bot-title{font-size:13.5px;font-weight:700;color:var(--text)}
-.bot-card-body{padding:16px;display:flex;flex-direction:column;gap:13px;flex:1}
-.bot-field-label{font-size:11.5px;color:var(--muted);font-weight:600;display:block;margin-bottom:5px}
-.bot-events-box{display:flex;flex-direction:column;gap:7px;background:#141b25;border:1px solid var(--line);border-radius:8px;padding:10px}
-.bot-event-checkbox{display:flex;align-items:center;gap:8px;font-size:12px;color:#c3cfdd;cursor:pointer}
-.bot-event-checkbox input{cursor:pointer}
-.bot-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-top:1px solid var(--line);background:#0e131b}
-.bot-card-foot .btn{height:30px;padding:0 12px;font-size:11.5px}
+.push-task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px;margin-bottom:20px}
+.push-task-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:16px;box-shadow:var(--shadow);transition:border-color .2s,box-shadow .2s;position:relative}
+.push-task-card:hover{border-color:var(--line2)}
+.push-task-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.push-task-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.push-task-logo{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:11.5px;font-weight:700;flex:none}
+.push-task-logo.wecom{background:linear-gradient(135deg,#1e6be5,#1551b8)}
+.push-task-logo.ding{background:linear-gradient(135deg,#0089ff,#006cd4)}
+.push-task-logo.feishu{background:linear-gradient(135deg,#00d6b9,#009e86)}
+.push-task-logo.custom{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+.push-task-meta{min-width:0}
+.push-task-name{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.push-task-target{font-size:11px;color:var(--muted);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.push-task-events{display:flex;flex-wrap:wrap;gap:5px}
+.push-event-tag{font-size:10.5px;padding:2px 7px;border-radius:4px;background:#141d28;border:1px solid var(--line);color:#94a3b8}
+.push-task-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
+.push-task-actions{display:flex;align-items:center;gap:6px}
+.push-task-actions .btn{height:28px;padding:0 9px;font-size:11px}
+
+.push-task-add{border:1px dashed #3a485a;border-radius:14px;background:transparent;min-height:160px;
+  color:#7890ad;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:border-color .2s,color .2s;cursor:pointer}
+.push-task-add:hover{border-color:var(--blue-line);color:#8ebcf4}
+.push-task-add i{font-size:26px;font-style:normal}
+.push-task-add b{font-size:13px}
 
 .push-split-layout{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px}
 .push-snapshot-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
@@ -520,6 +526,10 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .push-log-channel.feishu{background:rgba(0,214,185,.15);color:#5eead4;border:1px solid rgba(0,214,185,.3)}
 .push-log-content{font-size:12.5px;color:var(--text);margin-bottom:4px;line-height:1.5}
 .push-log-time{font-size:11px;color:var(--muted)}
+
+.bot-picker-segmented{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#10151e;border:1px solid var(--line);border-radius:9px;padding:4px;margin-bottom:14px}
+.bot-picker-btn{height:34px;border:0;border-radius:6px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;cursor:pointer}
+.bot-picker-btn.active{background:#223046;color:#7fb1f6;box-shadow:0 2px 6px rgba(0,0,0,.2)}
 
 @media(max-width:960px){
   .push-split-layout{grid-template-columns:1fr}
@@ -964,124 +974,110 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
           </div>
           <div class="msg-banner-actions">
             <button class="btn dev-placeholder-func">全部连通性测试</button>
-            <button class="btn primary dev-placeholder-func">＋ 添加自定义 Webhook</button>
+            <button class="btn primary" id="openNewTaskBtn">＋ 新建推送任务</button>
           </div>
         </div>
 
-        <!-- 机器人渠道配置网格 -->
-        <div class="bot-grid">
-          <!-- 企业微信机器人 -->
-          <div class="bot-card">
-            <div class="bot-card-head">
-              <div class="bot-brand">
-                <span class="bot-logo wecom">企微</span>
-                <span class="bot-title">企业微信群机器人</span>
-              </div>
-              <label class="sched-switch dev-placeholder-func" style="height:28px;padding:2px 8px;font-size:11px" title="启用/停用">
-                <input type="checkbox" checked>
-                <span class="sched-slider" style="width:26px;height:15px"></span>
-              </label>
-            </div>
-            <div class="bot-card-body">
-              <div>
-                <span class="bot-field-label">Webhook 地址</span>
-                <input class="field dev-placeholder-func" style="width:100%" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." value="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=******">
-              </div>
-              <div>
-                <span class="bot-field-label">触发推送事件</span>
-                <div class="bot-events-box">
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 大屏设备掉线 / 异常离线告警</label>
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 内存超限看门狗重载与进程恢复通知</label>
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 定时巡检推送 (附带当前大屏画面截图)</label>
+        <!-- 已配置推送任务列表 -->
+        <div class="push-task-grid">
+          <!-- 任务 1：企业微信 -->
+          <div class="push-task-card">
+            <div class="push-task-top">
+              <div class="push-task-brand">
+                <span class="push-task-logo wecom">企微</span>
+                <div class="push-task-meta">
+                  <div class="push-task-name">展厅大屏故障与掉线报警</div>
+                  <div class="push-task-target">目标: #展厅运维监控群 (qyapi.weixin.qq.com/...)</div>
                 </div>
               </div>
+              <label class="sched-switch dev-placeholder-func" style="height:26px;padding:2px 7px;font-size:10.5px" title="启用/暂停该任务">
+                <input type="checkbox" checked>
+                <span class="sched-slider" style="width:24px;height:14px"></span>
+              </label>
             </div>
-            <div class="bot-card-foot">
-              <span class="online" style="font-size:11px"><i class="dot"></i>已配置 (启用中)</span>
-              <div style="display:flex;gap:6px">
-                <button class="btn dev-placeholder-func">测试发送</button>
-                <button class="btn primary dev-placeholder-func">保存</button>
+            <div>
+              <div class="push-task-events">
+                <span class="push-event-tag">⚠️ 离线超时告警</span>
+                <span class="push-event-tag">🔄 看门狗崩溃重载</span>
+                <span class="push-event-tag">📸 每日巡检截图</span>
+              </div>
+            </div>
+            <div class="push-task-foot">
+              <span class="online" style="font-size:11px"><i class="dot"></i>运行中 · 上次推送: 10分钟前</span>
+              <div class="push-task-actions">
+                <button class="btn dev-placeholder-func">测试</button>
+                <button class="btn dev-placeholder-func">编辑</button>
               </div>
             </div>
           </div>
 
-          <!-- 钉钉群机器人 -->
-          <div class="bot-card">
-            <div class="bot-card-head">
-              <div class="bot-brand">
-                <span class="bot-logo ding">钉钉</span>
-                <span class="bot-title">钉钉群机器人</span>
-              </div>
-              <label class="sched-switch dev-placeholder-func" style="height:28px;padding:2px 8px;font-size:11px" title="启用/停用">
-                <input type="checkbox" checked>
-                <span class="sched-slider" style="width:26px;height:15px"></span>
-              </label>
-            </div>
-            <div class="bot-card-body">
-              <div>
-                <span class="bot-field-label">Webhook 地址</span>
-                <input class="field dev-placeholder-func" style="width:100%" placeholder="https://oapi.dingtalk.com/robot/send?access_token=..." value="https://oapi.dingtalk.com/robot/send?access_token=******">
-              </div>
-              <div>
-                <span class="bot-field-label">安全设置加签 Secret (选填)</span>
-                <input class="field dev-placeholder-func" style="width:100%" placeholder="SEC..." value="SEC128938******">
-              </div>
-              <div>
-                <span class="bot-field-label">触发推送事件</span>
-                <div class="bot-events-box">
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 大屏设备掉线 / 异常离线告警</label>
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 内存超限看门狗重载与进程恢复通知</label>
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox"> 定时巡检推送 (附带当前大屏画面截图)</label>
+          <!-- 任务 2：钉钉 -->
+          <div class="push-task-card">
+            <div class="push-task-top">
+              <div class="push-task-brand">
+                <span class="push-task-logo ding">钉钉</span>
+                <div class="push-task-meta">
+                  <div class="push-task-name">大屏每日早晚巡检通报</div>
+                  <div class="push-task-target">目标: #运营例会日报群 (oapi.dingtalk.com/...)</div>
                 </div>
               </div>
+              <label class="sched-switch dev-placeholder-func" style="height:26px;padding:2px 7px;font-size:10.5px" title="启用/暂停该任务">
+                <input type="checkbox" checked>
+                <span class="sched-slider" style="width:24px;height:14px"></span>
+              </label>
             </div>
-            <div class="bot-card-foot">
-              <span class="online" style="font-size:11px"><i class="dot"></i>已配置 (启用中)</span>
-              <div style="display:flex;gap:6px">
-                <button class="btn dev-placeholder-func">测试发送</button>
-                <button class="btn primary dev-placeholder-func">保存</button>
+            <div>
+              <div class="push-task-events">
+                <span class="push-event-tag">📸 早 09:00 巡检截图</span>
+                <span class="push-event-tag">📸 晚 18:00 巡检截图</span>
+                <span class="push-event-tag">⚠️ 离线紧急报警</span>
+              </div>
+            </div>
+            <div class="push-task-foot">
+              <span class="online" style="font-size:11px"><i class="dot"></i>运行中 · 上次推送: 今天 09:00</span>
+              <div class="push-task-actions">
+                <button class="btn dev-placeholder-func">测试</button>
+                <button class="btn dev-placeholder-func">编辑</button>
               </div>
             </div>
           </div>
 
-          <!-- 飞书群机器人 -->
-          <div class="bot-card">
-            <div class="bot-card-head">
-              <div class="bot-brand">
-                <span class="bot-logo feishu">飞书</span>
-                <span class="bot-title">飞书群机器人</span>
+          <!-- 任务 3：飞书 -->
+          <div class="push-task-card">
+            <div class="push-task-top">
+              <div class="push-task-brand">
+                <span class="push-task-logo feishu">飞书</span>
+                <div class="push-task-meta">
+                  <div class="push-task-name">分时段排期切换通知</div>
+                  <div class="push-task-target">目标: #内容投放协作群 (open.feishu.cn/...)</div>
+                </div>
               </div>
-              <label class="sched-switch dev-placeholder-func" style="height:28px;padding:2px 8px;font-size:11px" title="启用/停用">
+              <label class="sched-switch dev-placeholder-func" style="height:26px;padding:2px 7px;font-size:10.5px" title="启用/暂停该任务">
                 <input type="checkbox">
-                <span class="sched-slider" style="width:26px;height:15px"></span>
+                <span class="sched-slider" style="width:24px;height:14px"></span>
               </label>
             </div>
-            <div class="bot-card-body">
-              <div>
-                <span class="bot-field-label">Webhook 地址</span>
-                <input class="field dev-placeholder-func" style="width:100%" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/...">
-              </div>
-              <div>
-                <span class="bot-field-label">签名校验密钥 (选填)</span>
-                <input class="field dev-placeholder-func" style="width:100%" placeholder="签名校验 Token">
-              </div>
-              <div>
-                <span class="bot-field-label">触发推送事件</span>
-                <div class="bot-events-box">
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 大屏设备掉线 / 异常离线告警</label>
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 排期时段切换提醒</label>
-                  <label class="bot-event-checkbox dev-placeholder-func"><input type="checkbox" checked> 定时巡检推送 (附带当前大屏画面截图)</label>
-                </div>
+            <div>
+              <div class="push-task-events">
+                <span class="push-event-tag">📅 排期时段切换提醒</span>
+                <span class="push-event-tag">⚠️ 离线超时告警</span>
               </div>
             </div>
-            <div class="bot-card-foot">
-              <span style="font-size:11px;color:var(--muted)">未开启</span>
-              <div style="display:flex;gap:6px">
-                <button class="btn dev-placeholder-func">测试发送</button>
-                <button class="btn primary dev-placeholder-func">保存</button>
+            <div class="push-task-foot">
+              <span style="font-size:11px;color:var(--muted)">已暂停</span>
+              <div class="push-task-actions">
+                <button class="btn dev-placeholder-func">测试</button>
+                <button class="btn dev-placeholder-func">编辑</button>
               </div>
             </div>
           </div>
+
+          <!-- 新建任务卡片按钮 -->
+          <button type="button" class="push-task-add" id="addTaskCardBtn">
+            <i>＋</i>
+            <b>新建推送任务</b>
+            <span style="font-size:11px;color:var(--muted)">选择企微、钉钉、飞书等渠道</span>
+          </button>
         </div>
 
         <!-- 画面快照即时推送 & 推送日志 -->
@@ -1399,6 +1395,80 @@ document.addEventListener('click', (e) => {
     toast('该功能正在开发中…');
   }
 });
+
+/* ---------- 新建群机器人推送任务弹窗 ---------- */
+function openNewPushTaskModal() {
+  const wrap = document.createElement('div');
+  wrap.className = 'form';
+  wrap.innerHTML = `
+    <div class="form-row">
+      <span>选择群机器人渠道</span>
+      <div class="bot-picker-segmented" id="modalBotPicker">
+        <button type="button" class="bot-picker-btn active" data-channel="wecom">企业微信</button>
+        <button type="button" class="bot-picker-btn" data-channel="ding">钉钉</button>
+        <button type="button" class="bot-picker-btn" data-channel="feishu">飞书</button>
+        <button type="button" class="bot-picker-btn" data-channel="custom">自定义 Hook</button>
+      </div>
+    </div>
+    <label class="form-row">
+      <span>任务名称</span>
+      <input class="field" id="newTaskName" placeholder="例如：展厅大屏故障报警群" value="展厅大屏离线与故障告警">
+    </label>
+    <label class="form-row">
+      <span id="newTaskUrlLabel">Webhook 机器人地址</span>
+      <input class="field" id="newTaskUrl" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...">
+    </label>
+    <label class="form-row" id="newTaskSecretRow" style="display:none">
+      <span>安全加签密钥 (Secret / Token)</span>
+      <input class="field" id="newTaskSecret" placeholder="选填，若群机器人开启了加签校验请输入">
+    </label>
+    <div class="form-row">
+      <span>订阅推送事件</span>
+      <div class="bot-events-box" style="margin-top:4px">
+        <label class="bot-event-checkbox"><input type="checkbox" checked> 大屏掉线 / 异常离线告警 (超时30秒触发)</label>
+        <label class="bot-event-checkbox"><input type="checkbox" checked> 内存超限看门狗重载与进程恢复通知</label>
+        <label class="bot-event-checkbox"><input type="checkbox" checked> 定时巡检推送 (附带当前大屏最新全屏截图)</label>
+      </div>
+    </div>
+  `;
+
+  // 渠道切换联动
+  const btns = wrap.querySelectorAll('.bot-picker-btn');
+  btns.forEach((btn) => {
+    btn.onclick = () => {
+      btns.forEach((b) => b.classList.toggle('active', b === btn));
+      const ch = btn.dataset.channel;
+      const urlInput = wrap.querySelector('#newTaskUrl');
+      const secretRow = wrap.querySelector('#newTaskSecretRow');
+      if (ch === 'wecom') {
+        urlInput.placeholder = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...';
+        secretRow.style.display = 'none';
+      } else if (ch === 'ding') {
+        urlInput.placeholder = 'https://oapi.dingtalk.com/robot/send?access_token=...';
+        secretRow.style.display = 'flex';
+      } else if (ch === 'feishu') {
+        urlInput.placeholder = 'https://open.feishu.cn/open-apis/bot/v2/hook/...';
+        secretRow.style.display = 'flex';
+      } else {
+        urlInput.placeholder = 'https://api.yourcompany.com/webhook/screen-event';
+        secretRow.style.display = 'none';
+      }
+    };
+  });
+
+  openModal({
+    title: '新建群机器人推送任务',
+    body: wrap,
+    foot: [
+      { label: '取消', onClick: () => closeModal() },
+      { label: '测试发送', onClick: () => toast('该功能正在开发中…') },
+      { label: '创建任务', primary: true, onClick: () => { closeModal(); toast('该功能正在开发中…'); } },
+    ],
+  });
+}
+
+$('openNewTaskBtn').onclick = openNewPushTaskModal;
+$('addTaskCardBtn').onclick = openNewPushTaskModal;
 
 /* ---------- 设备名 ---------- */
 function applyDeviceName(name) {
