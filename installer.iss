@@ -1,4 +1,4 @@
-﻿; CastFlow 安装包脚本（Inno Setup 6）
+; CastFlow 安装包脚本（Inno Setup 6）
 ;
 ; 编译：  iscc installer.iss
 ; 前提：  先跑过 build.ps1，dist\CastFlow\ 已存在
@@ -22,7 +22,7 @@
 AppId={{8F3A5C21-4B7E-4D92-A6C1-3E5D7B9F0A24}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppPublisher=COSCIA
+AppPublisher=CastFlow
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
