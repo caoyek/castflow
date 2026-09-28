@@ -61,36 +61,36 @@
 
 ```mermaid
 flowchart TD
-    subgraph Client [控制端 (任意局域网设备)]
-        A1[📱 手机 / 平板浏览器]
-        A2[💻 PC 网页控制台]
+    subgraph Client["控制端 (任意局域网设备)"]
+        A1["📱 手机 / 平板浏览器"]
+        A2["💻 PC 网页控制台"]
     end
 
-    subgraph Server [CastFlow 服务核心 (Windows PC / 迷你工控机)]
-        B1[HTTP Server / RESTful API :8080]
-        B2[静态媒体分片服务 / Range 206]
-        B3[看门狗守护循环 Watchdog]
-        B4[本机运维菜单 castflow.ps1]
-        B5[Win32 API user32.dll 置顶调度]
+    subgraph Server["CastFlow 服务核心 (Windows PC / 迷你工控机)"]
+        B1["HTTP Server / RESTful API :8080"]
+        B2["静态媒体分片服务 / Range 206"]
+        B3["看门狗守护循环 Watchdog"]
+        B4["本机运维菜单 castflow.ps1"]
+        B5["Win32 API user32.dll 置顶调度"]
     end
 
-    subgraph Browser [大屏显示终端 (Google Chrome)]
-        C1[CDP 调试端口 :9222]
-        C2[网页 / BI 看板页面]
-        C3[媒体播放渲染引擎]
-        C4[V8 引擎 JS 堆内存]
+    subgraph Browser["大屏显示终端 (Google Chrome)"]
+        C1["CDP 调试端口 :9222"]
+        C2["网页 / BI 看板页面"]
+        C3["媒体播放渲染引擎"]
+        C4["V8 引擎 JS 堆内存"]
     end
 
-    A1 -->|HTTP / JSON| B1
-    A2 -->|HTTP / JSON / 二进制上传| B1
+    A1 -->|"HTTP / JSON"| B1
+    A2 -->|"HTTP / JSON / 二进制上传"| B1
 
-    B1 -->|WebSocket 远程命令| C1
-    C1 -->|截图回传 / 页面切换 / 缩放| B1
-    C1 -->|JS Heap 内存读数| B3
-    B3 -->|超过阈值平滑 Reload| C1
-    B3 -->|进程崩溃自动拉起| Browser
-    B5 -->|HWND_TOPMOST| Browser
-    B2 -->|流式推流| C3
+    B1 -->|"WebSocket 远程命令"| C1
+    C1 -->|"截图回传 / 页面切换 / 缩放"| B1
+    C1 -->|"JS Heap 内存读数"| B3
+    B3 -->|"超过阈值平滑 Reload"| C1
+    B3 -->|"进程崩溃自动拉起"| Browser
+    B5 -->|"HWND_TOPMOST"| Browser
+    B2 -->|"流式推流"| C3
 ```
 
 ---
