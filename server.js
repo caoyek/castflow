@@ -495,7 +495,7 @@ const server = http.createServer(async (req, res) => {
       const url = type.startsWith('video')
         ? `${base}/media/${encodeURIComponent(name)}`
         : `${base}/view/image/${encodeURIComponent(name)}`;
-      return json(res, 200, { ok: true, name, bytes: buf.length, ...(await screen.openTab(url)) });
+      return json(res, 200, { ok: true, name, bytes: buf.length, url });
     }
 
     if (pathname === '/api/media/delete' && req.method === 'POST') {

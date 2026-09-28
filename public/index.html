@@ -231,17 +231,22 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .asset-preview img{width:100%;height:100%;object-fit:cover;display:block}
 .asset-preview video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .asset-preview .ph{color:#4d5f77}.asset-preview .ph svg{width:28px;height:28px}
-.asset-preview.web{background:linear-gradient(135deg,#131e2d,#0b1118);padding:10px}
+.asset-preview.web{background:radial-gradient(circle at 50% 20%,#15263d 0%,#0c121b 85%);padding:10px}
 .asset-preview.image{background:linear-gradient(135deg,#1a2330,#0d1318)}
 .asset-preview.video{background:linear-gradient(135deg,#231630,#0d1017)}
 .video-play-badge{position:absolute;inset:0;margin:auto;width:34px;height:34px;border-radius:50%;background:rgba(15,23,42,.78);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(4px);display:grid;place-items:center;color:#fff;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.5)}
 .video-play-badge svg{width:14px;height:14px;margin-left:2px}
-.web-preview-box{width:100%;height:100%;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(21,31,45,.5);display:flex;flex-direction:column;overflow:hidden}
-.web-preview-header{height:18px;background:rgba(0,0,0,.25);display:flex;align-items:center;gap:4px;padding:0 8px}
-.web-preview-dot{width:5px;height:5px;border-radius:50%;background:#48576b}
-.web-preview-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px}
-.web-favicon{width:22px;height:22px;border-radius:4px;flex:none}
-.web-host{font-size:11px;color:#8ba2bc;font-family:var(--mono);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.web-preview-box{width:100%;height:100%;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:rgba(18,27,39,.65);display:flex;flex-direction:column;justify-content:space-between;padding:8px 10px;position:relative;overflow:hidden}
+.web-preview-box::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(56,139,253,.08) 1px,transparent 1px);background-size:10px 10px;pointer-events:none}
+.web-preview-top{display:flex;align-items:center;gap:6px;position:relative;z-index:1}
+.web-preview-dot{width:5px;height:5px;border-radius:50%;background:#388bfd;box-shadow:0 0 6px #388bfd;flex:none}
+.web-host-tag{font-size:10px;color:#7995b5;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 20px)}
+.web-preview-center{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;position:relative;z-index:1}
+.web-vector-badge{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#1d4ed8,#2563eb);border:1px solid rgba(255,255,255,.18);box-shadow:0 6px 16px rgba(37,99,235,.25);display:grid;place-items:center;color:#fff;flex:none}
+.web-vector-badge svg{width:20px;height:20px}
+.web-meta-brief{min-width:0;display:flex;flex-direction:column;gap:2px}
+.web-brief-name{font-size:12px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.web-brief-scheme{font-size:9.5px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;font-family:var(--mono)}
 .asset-badge{position:absolute;top:8px;right:8px;padding:3px 7px;border-radius:6px;
   background:rgba(9,12,17,.82);border:1px solid rgba(255,255,255,.1);font-size:10px;color:#c6d2e0}
 .asset-meta{padding:13px}
@@ -1481,12 +1486,18 @@ function renderLibrary() {
     } else {
       previewInner = `<div class="asset-preview web">
         <div class="web-preview-box">
-          <div class="web-preview-header">
-            <span class="web-preview-dot"></span><span class="web-preview-dot"></span><span class="web-preview-dot"></span>
+          <div class="web-preview-top">
+            <span class="web-preview-dot"></span>
+            <span class="web-host-tag">${escapeHtml(it.host)}</span>
           </div>
-          <div class="web-preview-body">
-            <img class="web-favicon" src="${it.faviconUrl}" alt="" onerror="this.style.display='none'">
-            <span class="web-host">${escapeHtml(it.host)}</span>
+          <div class="web-preview-center">
+            <div class="web-vector-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3M7 9h10M7 13h6"/></svg>
+            </div>
+            <div class="web-meta-brief">
+              <span class="web-brief-name">${escapeHtml(it.name)}</span>
+              <span class="web-brief-scheme">${escapeHtml((it.host || '').split(':')[0] || 'WEB')}</span>
+            </div>
           </div>
         </div>
         <span class="asset-badge">${badge}</span>
@@ -1594,11 +1605,6 @@ function renderLibPop() {
       vd.preload = 'metadata'; vd.muted = true; vd.playsInline = true;
       vd.style.cssText = 'width:100%;height:100%;object-fit:cover;pointer-events:none;border-radius:4px;';
       thumb.appendChild(vd);
-    } else if (it.type === 'web' && it.faviconUrl) {
-      const im = document.createElement('img');
-      im.loading = 'lazy'; im.alt = ''; im.src = it.faviconUrl;
-      im.onerror = () => { thumb.innerHTML = SVG.link; };
-      thumb.appendChild(im);
     } else {
       thumb.innerHTML = it.type === 'web' ? SVG.link : it.type === 'video' ? SVG.video : SVG.image;
     }
@@ -1664,15 +1670,17 @@ $('addWebBtn').onclick = () => openForm({
 
 /* ---------- 上传 ---------- */
 async function uploadFiles(files) {
+  let count = 0;
   for (const f of files) {
-    toast('上传 ' + f.name + ' …');
     try {
-      const d = await api('/api/upload', { method: 'POST', headers: { 'X-Filename': encodeURIComponent(f.name) }, body: f });
-      toast('已打开 · ' + d.name, 'ok');
+      await api('/api/upload', { method: 'POST', headers: { 'X-Filename': encodeURIComponent(f.name) }, body: f });
+      count++;
     } catch (err) { toast('上传失败：' + err.message, 'bad'); }
   }
-  refreshTabs(); refreshLibrary(); refreshStatus();
-  setTimeout(refreshShot, 800);
+  if (count > 0) {
+    toast(`已添加 ${count} 个素材到内容库`, 'ok');
+  }
+  refreshLibrary();
 }
 
 const pick = () => $('fileInput').click();
