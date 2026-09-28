@@ -74,6 +74,17 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .proc-actions button:hover:not(:disabled){background:#1d2734;border-color:var(--line2);color:#fff}
 .proc-actions button:disabled{opacity:.34;cursor:default}
 
+.sidebar-footer{margin-top:10px;padding:0 2px;flex:none}
+.sidebar-github{display:flex;align-items:center;gap:7px;font-size:11px;color:#637286;text-decoration:none;padding:6px 9px;border-radius:8px;transition:all .15s}
+.sidebar-github svg{flex:none;opacity:.8;transition:opacity .15s}
+.sidebar-github:hover{color:#79b8ff;background:rgba(88,166,255,.08)}
+.sidebar-github:hover svg{opacity:1;filter:drop-shadow(0 0 6px rgba(88,166,255,.5))}
+
+.site-footer{margin-top:28px;padding-top:18px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:#536173}
+.site-footer .dot-sep{opacity:.4}
+.footer-github{display:inline-flex;align-items:center;gap:6px;color:#6b7d94;text-decoration:none;transition:color .15s}
+.footer-github:hover{color:#58a6ff}
+
 /* ---------- 工作区 ---------- */
 .workspace{min-width:0}
 .topbar{height:70px;display:flex;align-items:center;justify-content:space-between;gap:16px;
@@ -472,6 +483,14 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
         </div>
       </div>
     </div>
+    <div class="sidebar-footer">
+      <a class="sidebar-github" href="https://github.com/caoyek/castflow" target="_blank" rel="noopener noreferrer" title="访问 GitHub 开源仓库">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        <span>GitHub: caoyek/castflow</span>
+      </a>
+    </div>
   </aside>
 
   <!-- ================= 工作区 ================= -->
@@ -616,6 +635,18 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
           </div>
         </div>
       </section>
+
+      <!-- 页面底部开源与 GitHub 链接 -->
+      <footer class="site-footer">
+        <span>CastFlow · 大屏智能投放与展示系统</span>
+        <span class="dot-sep">/</span>
+        <a href="https://github.com/caoyek/castflow" target="_blank" rel="noopener noreferrer" class="footer-github" title="访问 GitHub 源码仓库">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          <span>GitHub: caoyek/castflow</span>
+        </a>
+      </footer>
 
     </main>
   </div>

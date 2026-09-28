@@ -263,7 +263,7 @@ namespace CastFlow.Manager
         {
             Title = "CastFlow · 大屏投放控制台";
             Width = 550;
-            Height = 830;
+            Height = 845;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             ResizeMode = ResizeMode.CanMinimize;
             Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(13, 17, 23));
@@ -592,15 +592,35 @@ namespace CastFlow.Manager
             footGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             footGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
+            var footLeft = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
             _txtHint = new TextBlock
             {
                 Text = "就绪 (关闭窗口将最小化到任务栏托盘持续守护)",
                 FontSize = 11.5,
-                Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(110, 125, 145)),
-                VerticalAlignment = VerticalAlignment.Center
+                Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(110, 125, 145))
             };
-            Grid.SetColumn(_txtHint, 0);
-            footGrid.Children.Add(_txtHint);
+            footLeft.Children.Add(_txtHint);
+
+            var gitRow = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
+            var lblGit = new TextBlock
+            {
+                Text = "GitHub: https://github.com/caoyek/castflow",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(78, 128, 192)),
+                TextDecorations = TextDecorations.Underline,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                ToolTip = "点击在浏览器中打开 GitHub 开源仓库"
+            };
+            lblGit.MouseDown += (s, e) =>
+            {
+                try { Process.Start(new ProcessStartInfo("https://github.com/caoyek/castflow") { UseShellExecute = true }); }
+                catch { }
+            };
+            gitRow.Children.Add(lblGit);
+            footLeft.Children.Add(gitRow);
+
+            Grid.SetColumn(footLeft, 0);
+            footGrid.Children.Add(footLeft);
 
             var btnQuit = CreateActionButton("退  出", System.Windows.Media.Color.FromRgb(218, 54, 51), System.Windows.Media.Brushes.White);
             btnQuit.Width = 110;
@@ -775,6 +795,11 @@ namespace CastFlow.Manager
             menu.Items.Add("打开 Web 控制台", null, (s, e) => OpenWebConsole());
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("重启服务", null, async (s, e) => await ActionRestartAsync());
+            menu.Items.Add("访问 GitHub 仓库", null, (s, e) =>
+            {
+                try { Process.Start(new ProcessStartInfo("https://github.com/caoyek/castflow") { UseShellExecute = true }); }
+                catch { }
+            });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("退出 CastFlow", null, (s, e) =>
             {
