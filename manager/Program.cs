@@ -119,7 +119,7 @@ namespace CastFlow.Manager
         private int _currentServerPid = 0;
 
         // 在线更新状态
-        private const string CURRENT_VERSION = "v1.0.1";
+        private const string CURRENT_VERSION = "v1.0.2";
         private string _latestVersionTag = null;
         private string _installerDownloadUrl = null;
         private TextBlock _txtVersion;

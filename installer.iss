@@ -14,7 +14,7 @@
 ;   7. 启动并打开设置页
 
 #define AppName "CastFlow"
-#define AppVersion "1.0.1"
+#define AppVersion "1.0.2"
 #define AppExe "CastFlow.exe"
 #define WebPort "18089"
 
