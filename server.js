@@ -548,10 +548,8 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/schedule/toggle' && req.method === 'POST') {
       const { enabled } = await readBody(req);
-      const s = scheduleMgr.loadSchedule();
-      s.enabled = enabled !== undefined ? !!enabled : !s.enabled;
-      scheduleMgr.saveSchedule(s);
-      return json(res, 200, { ok: true, ...scheduleMgr.getStatus() });
+      const status = await scheduleMgr.toggleSchedule(enabled, screen, PUBLIC_BASE);
+      return json(res, 200, { ok: true, ...status });
     }
 
     if (pathname === '/api/schedule/resume' && req.method === 'POST') {

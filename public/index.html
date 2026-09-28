@@ -683,15 +683,11 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
           </div>
 
           <div class="sched-head-actions">
-            <label class="sched-switch" id="schedSwitchWrap">
+            <label class="sched-switch" id="schedSwitchWrap" title="点击开启或关闭排期功能">
               <input type="checkbox" id="schedMasterToggle">
               <span class="sched-slider"></span>
-              <span id="schedToggleLabel">排期已暂停</span>
+              <span id="schedToggleLabel">排期功能已关闭</span>
             </label>
-            <button class="btn" id="schedResumeBtn" title="恢复当前排期">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span>恢复排期</span>
-            </button>
             <button class="btn primary" id="schedAddBtn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
               <span>新建时段</span>
@@ -1847,7 +1843,7 @@ function renderScheduleView(data) {
   const switchWrap = $('schedSwitchWrap');
   masterToggle.checked = isEnabled;
   switchWrap.classList.toggle('active', isEnabled);
-  $('schedToggleLabel').textContent = isEnabled ? '排期运行中' : '排期已暂停';
+  $('schedToggleLabel').textContent = isEnabled ? '排期功能已开启' : '排期功能已关闭';
 
   const badge = $('schedActiveBadge');
   const badgeText = $('schedActiveText');
@@ -1855,13 +1851,13 @@ function renderScheduleView(data) {
 
   if (isEnabled && activeRule) {
     badge.className = 'sched-status-badge active';
-    badgeText.textContent = `正在生效 · ${activeRule.timeStart}-${activeRule.timeEnd} ${activeRule.name || ''}`;
+    badgeText.textContent = `排期生效中 · ${activeRule.timeStart}-${activeRule.timeEnd} ${activeRule.name || ''}`;
   } else if (isEnabled) {
     badge.className = 'sched-status-badge';
-    badgeText.textContent = '当前时刻无匹配排期';
+    badgeText.textContent = '排期已开启 · 当前时刻无匹配时段';
   } else {
     badge.className = 'sched-status-badge';
-    badgeText.textContent = '排期已暂停';
+    badgeText.textContent = '排期功能已关闭';
   }
 
   renderScheduleTimeline(rules, activeId, isEnabled, nowTime);
@@ -2212,23 +2208,10 @@ $('schedMasterToggle').onchange = async () => {
     if (res.ok) {
       currentSchedule.enabled = res.enabled;
       renderScheduleView(res);
-      toast(res.enabled ? '排期已开启' : '排期已暂停', 'ok');
+      toast(res.enabled ? '排期功能已开启' : '排期功能已关闭', 'ok');
     }
   } catch (err) {
     toast('切换失败: ' + err.message, 'bad');
-  }
-};
-
-$('schedResumeBtn').onclick = async () => {
-  try {
-    toast('正在切回排期…');
-    const res = await api('/api/schedule/resume', { method: 'POST' });
-    if (res.ok) {
-      renderScheduleView(res);
-      toast('已恢复当前排期播放', 'ok');
-    }
-  } catch (err) {
-    toast('恢复排期失败: ' + err.message, 'bad');
   }
 };
 

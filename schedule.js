@@ -227,6 +227,29 @@ function getStatus() {
   };
 }
 
+// 切换排期总开关（开启时立即生效匹配时段，关闭时立刻暂停调度）
+async function toggleSchedule(enabled, screen, publicBase) {
+  const schedule = loadSchedule();
+  schedule.enabled = enabled !== undefined ? !!enabled : !schedule.enabled;
+  saveSchedule(schedule);
+  isManualOverride = false;
+
+  if (schedule.enabled && screen) {
+    const nowTime = getCurrentTimeStr();
+    const matchedRule = getActiveRule(schedule, nowTime);
+    if (matchedRule) {
+      currentActiveRuleId = matchedRule.id;
+      await executeRule(matchedRule, screen, publicBase);
+    } else {
+      currentActiveRuleId = null;
+    }
+  } else {
+    currentActiveRuleId = null;
+  }
+
+  return getStatus();
+}
+
 module.exports = {
   loadSchedule,
   saveSchedule,
@@ -237,4 +260,5 @@ module.exports = {
   resumeSchedule,
   testRule,
   getStatus,
+  toggleSchedule,
 };
