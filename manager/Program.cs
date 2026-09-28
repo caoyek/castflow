@@ -118,6 +118,15 @@ namespace CastFlow.Manager
         private string _shutdownInfo = "关";
         private int _currentServerPid = 0;
 
+        // 在线更新状态
+        private const string CURRENT_VERSION = "v1.0.1";
+        private string _latestVersionTag = null;
+        private string _installerDownloadUrl = null;
+        private TextBlock _txtVersion;
+        private Border _btnUpdate;
+        private TextBlock _txtUpdateIcon;
+        private bool _isDownloadingUpdate = false;
+
         public MainWindow()
         {
             _appRoot = AppDomain.CurrentDomain.BaseDirectory;
@@ -135,7 +144,15 @@ namespace CastFlow.Manager
             _pollTimer.Tick += async (s, e) => await CheckStatusAsync();
             _pollTimer.Start();
 
-            Loaded += async (s, e) => await CheckStatusAsync();
+            Loaded += async (s, e) =>
+            {
+                await CheckStatusAsync();
+                var bgUpdate = Task.Run(async () =>
+                {
+                    await Task.Delay(2000);
+                    await CheckForUpdatesSilentlyAsync();
+                });
+            };
         }
 
         private int ResolveConfigPort()
@@ -627,12 +644,13 @@ namespace CastFlow.Manager
             var gitRow = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
             var lblGit = new TextBlock
             {
-                Text = "GitHub: https://github.com/caoyek/castflow",
+                Text = "GitHub",
                 FontSize = 11,
                 Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(78, 128, 192)),
                 TextDecorations = TextDecorations.Underline,
                 Cursor = System.Windows.Input.Cursors.Hand,
-                ToolTip = "点击在浏览器中打开 GitHub 开源仓库"
+                ToolTip = "点击在浏览器中打开 GitHub 开源仓库 (https://github.com/caoyek/castflow)",
+                VerticalAlignment = VerticalAlignment.Center
             };
             lblGit.MouseDown += (s, e) =>
             {
@@ -640,6 +658,50 @@ namespace CastFlow.Manager
                 catch { }
             };
             gitRow.Children.Add(lblGit);
+
+            var lblSep = new TextBlock
+            {
+                Text = " · ",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 95, 115)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            gitRow.Children.Add(lblSep);
+
+            _txtVersion = new TextBlock
+            {
+                Text = CURRENT_VERSION,
+                FontSize = 11,
+                Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(130, 145, 165)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            gitRow.Children.Add(_txtVersion);
+
+            // 更新下载按钮（默认折叠，检测到新版本时展示在版本号右侧）
+            _btnUpdate = new Border
+            {
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(24, 72, 138)),
+                BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(55, 125, 220)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(6, 1, 6, 1),
+                Margin = new Thickness(8, 0, 0, 0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                VerticalAlignment = VerticalAlignment.Center,
+                Visibility = Visibility.Collapsed,
+                ToolTip = "点击自动下载新版本安装包并启动升级"
+            };
+            _txtUpdateIcon = new TextBlock
+            {
+                Text = "⬇ 新版可用",
+                FontSize = 10.5,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = System.Windows.Media.Brushes.White
+            };
+            _btnUpdate.Child = _txtUpdateIcon;
+            _btnUpdate.MouseDown += (s, e) => OnUpdateClicked();
+            gitRow.Children.Add(_btnUpdate);
+
             footLeft.Children.Add(gitRow);
 
             Grid.SetColumn(footLeft, 0);
@@ -818,6 +880,7 @@ namespace CastFlow.Manager
             menu.Items.Add("打开 Web 控制台", null, (s, e) => OpenWebConsole());
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("重启服务", null, async (s, e) => await ActionRestartAsync());
+            menu.Items.Add("检查新版本...", null, async (s, e) => await CheckForUpdatesManuallyAsync());
             menu.Items.Add("访问 GitHub 仓库", null, (s, e) =>
             {
                 try { Process.Start(new ProcessStartInfo("https://github.com/caoyek/castflow") { UseShellExecute = true }); }
@@ -1624,6 +1687,185 @@ namespace CastFlow.Manager
             catch { }
 
             System.Windows.Application.Current.Shutdown();
+        }
+
+        // ================= 在线更新 =================
+        private async Task<bool> CheckForUpdatesSilentlyAsync()
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("CastFlowManager/" + CURRENT_VERSION);
+                    client.Timeout = TimeSpan.FromSeconds(6);
+                    string url = "https://api.github.com/repos/caoyek/castflow/releases/latest";
+                    var resp = await client.GetAsync(url);
+                    if (!resp.IsSuccessStatusCode) return false;
+
+                    string json = await resp.Content.ReadAsStringAsync();
+                    string tagName = ExtractJsonValue(json, "tag_name");
+                    if (string.IsNullOrEmpty(tagName)) return false;
+
+                    if (IsNewerVersion(tagName, CURRENT_VERSION))
+                    {
+                        _latestVersionTag = tagName;
+                        string dl = ExtractSetupExeDownloadUrl(json);
+                        _installerDownloadUrl = !string.IsNullOrEmpty(dl)
+                            ? dl
+                            : "https://github.com/caoyek/castflow/releases/download/" + tagName + "/CastFlow-Setup-" + tagName.TrimStart('v', 'V') + ".exe";
+
+                        Dispatcher.Invoke(new Action(() =>
+                        {
+                            _txtUpdateIcon.Text = "⬇ 新版 " + tagName;
+                            _btnUpdate.Visibility = Visibility.Visible;
+                            SetHint("发现新版本 " + tagName + "，可点击左下角下载图标升级");
+                        }));
+                        return true;
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private async Task CheckForUpdatesManuallyAsync()
+        {
+            SetHint("正在检查是否有新版本…");
+            bool hasUpdate = await CheckForUpdatesSilentlyAsync();
+            if (!hasUpdate)
+            {
+                SetHint("当前已是最新版本 (" + CURRENT_VERSION + ")");
+                System.Windows.MessageBox.Show(
+                    "当前已经是最新版本 (" + CURRENT_VERSION + ")！\n\n暂无可用更新。",
+                    "检查更新",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            else
+            {
+                OnUpdateClicked();
+            }
+        }
+
+        private bool IsNewerVersion(string latest, string current)
+        {
+            try
+            {
+                string v1 = (latest ?? "").Trim().TrimStart('v', 'V');
+                string v2 = (current ?? "").Trim().TrimStart('v', 'V');
+                var ver1 = new Version(v1);
+                var ver2 = new Version(v2);
+                return ver1 > ver2;
+            }
+            catch
+            {
+                return !string.Equals(latest, current, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        private string ExtractSetupExeDownloadUrl(string json)
+        {
+            try
+            {
+                int exeIdx = json.IndexOf(".exe\"");
+                if (exeIdx != -1)
+                {
+                    int urlKey = json.IndexOf("\"browser_download_url\":", exeIdx - 200 > 0 ? exeIdx - 200 : 0);
+                    if (urlKey == -1) urlKey = json.IndexOf("\"browser_download_url\":", exeIdx);
+                    if (urlKey != -1)
+                    {
+                        int q1 = json.IndexOf('"', urlKey + 23);
+                        int q2 = json.IndexOf('"', q1 + 1);
+                        if (q1 != -1 && q2 > q1)
+                        {
+                            return json.Substring(q1 + 1, q2 - q1 - 1);
+                        }
+                    }
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        private async void OnUpdateClicked()
+        {
+            if (_isDownloadingUpdate) return;
+            if (string.IsNullOrEmpty(_installerDownloadUrl) || string.IsNullOrEmpty(_latestVersionTag)) return;
+
+            var confirm = System.Windows.MessageBox.Show(
+                "检测到 CastFlow 最新版本 " + _latestVersionTag + "！\n\n" +
+                "点击【是】将立即在后台自动下载安装程序并执行覆盖升级。\n" +
+                "(升级时您的资料库、收藏页面、起始页和端口配置均会完好保留)\n\n" +
+                "是否立即开始升级？",
+                "在线更新",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Information);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            _isDownloadingUpdate = true;
+
+            try
+            {
+                _txtUpdateIcon.Text = "⬇ 准备中...";
+                SetHint("正在下载最新安装包 " + _latestVersionTag + "…");
+
+                string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "CastFlow-Setup-" + _latestVersionTag + ".exe");
+                if (File.Exists(tempFile))
+                {
+                    try { File.Delete(tempFile); } catch { }
+                }
+
+                using (var wc = new System.Net.WebClient())
+                {
+                    wc.Headers.Add("User-Agent", "CastFlowManager/" + CURRENT_VERSION);
+                    wc.DownloadProgressChanged += (s, e) =>
+                    {
+                        Dispatcher.Invoke(new Action(() =>
+                        {
+                            _txtUpdateIcon.Text = "⬇ " + e.ProgressPercentage + "%";
+                            SetHint("正在下载更新包: " + e.ProgressPercentage + "% (" + Math.Round(e.BytesReceived / 1048576.0, 1) + " MB)");
+                        }));
+                    };
+
+                    await wc.DownloadFileTaskAsync(new Uri(_installerDownloadUrl), tempFile);
+                }
+
+                if (File.Exists(tempFile) && new FileInfo(tempFile).Length > 1024 * 1024)
+                {
+                    _txtUpdateIcon.Text = "✔ 启动安装向导";
+                    SetHint("下载完成，正在启动安装程序…");
+
+                    // 启动安装程序（管理员提权执行）
+                    Process.Start(new ProcessStartInfo(tempFile) { UseShellExecute = true });
+
+                    // 延迟 1 秒后优雅安全退出当前控制台，释放文件锁，允许安装向导执行文件覆盖
+                    await Task.Delay(1000);
+                    await SafeExitAsync();
+                }
+                else
+                {
+                    throw new Exception("下载文件校验失败或文件不完整");
+                }
+            }
+            catch (Exception ex)
+            {
+                _isDownloadingUpdate = false;
+                _txtUpdateIcon.Text = "⬇ 重试更新";
+                SetHint("更新包下载失败: " + ex.Message);
+
+                var res = System.Windows.MessageBox.Show(
+                    "在线下载安装包失败：" + ex.Message + "\n\n" +
+                    "可能由于网络连接 GitHub 超时导致。\n" +
+                    "是否直接在系统浏览器中打开 Release 页面进行下载？",
+                    "下载失败提示",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                if (res == MessageBoxResult.Yes)
+                {
+                    try { Process.Start(new ProcessStartInfo("https://github.com/caoyek/castflow/releases/latest") { UseShellExecute = true }); } catch { }
+                }
+            }
         }
     }
 }
