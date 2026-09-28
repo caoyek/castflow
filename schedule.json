@@ -5,19 +5,11 @@
       "id": "rule_default_3",
       "name": "下午展播",
       "timeStart": "14:00",
-      "timeEnd": "18:08",
+      "timeEnd": "18:14",
       "type": "image",
       "target": "品牌宣传视频-封面.jpg",
-      "enabled": true
-    },
-    {
-      "id": "rule_1790589154916",
-      "name": "",
-      "timeStart": "17:55",
-      "timeEnd": "18:00",
-      "type": "web",
-      "target": "https://bi.aliyuncs.com/token3rd/dashboard/view/pc.htm?pageId=cd98aa82-7415-4902-80fd-b506960f8de1&accessToken=09992f0910309f6390d26affc9afeccd&dd_orientation=auto",
-      "enabled": false
+      "enabled": true,
+      "deviceId": "default"
     }
   ]
 }

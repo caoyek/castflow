@@ -1,6 +1,6 @@
 {
   "name": "castflow",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "轻量级局域网大屏投屏与无人值守控制系统 | Lightweight Big-Screen Kiosk & Digital Signage Controller powered by CDP",
   "main": "main.js",
   "bin": "main.js",
