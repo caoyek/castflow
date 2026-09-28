@@ -454,6 +454,49 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .sched-tag{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:6px;background:#151d28;color:#94a3b8;cursor:pointer;transition:all .15s}
 .sched-tag:hover{border-color:var(--blue);color:#79b8ff}
 
+/* ---------- 用户管理 ---------- */
+.user-layout{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.user-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.user-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1}
+.user-table-wrap{overflow-x:auto}
+.user-table{width:100%;border-collapse:collapse;text-align:left;font-size:12.5px}
+.user-table th{background:#0e131b;color:var(--muted);font-weight:600;padding:12px 18px;border-bottom:1px solid var(--line);white-space:nowrap}
+.user-table td{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--text);white-space:nowrap;vertical-align:middle}
+.user-table tr:hover td{background:rgba(255,255,255,.02)}
+.user-profile{display:flex;align-items:center;gap:12px}
+.user-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:700;display:grid;place-items:center;font-size:13px;flex:none}
+.user-avatar.op{background:linear-gradient(135deg,#0d9488,#0f766e)}
+.user-avatar.guest{background:linear-gradient(135deg,#475569,#334155)}
+.user-meta-name{font-weight:600;color:var(--text);margin-bottom:2px}
+.user-meta-account{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600}
+.role-badge.admin{background:rgba(56,139,253,.15);color:#79b8ff;border:1px solid rgba(56,139,253,.3)}
+.role-badge.op{background:rgba(20,184,166,.15);color:#5eead4;border:1px solid rgba(20,184,166,.3)}
+.role-badge.guest{background:rgba(148,163,184,.15);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}
+.user-actions{display:flex;align-items:center;gap:6px}
+.user-actions .btn{height:30px;padding:0 10px;font-size:11.5px}
+
+/* ---------- 消息推送 ---------- */
+.msg-layout{display:grid;grid-template-columns:minmax(340px,440px) minmax(0,1fr);gap:18px}
+.msg-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.msg-card-body{padding:18px;display:flex;flex-direction:column;gap:16px}
+.msg-form-item{display:flex;flex-direction:column;gap:7px}
+.msg-form-item label{font-size:12px;font-weight:600;color:var(--muted)}
+.msg-textarea{width:100%;height:84px;padding:10px 12px;background:#151c26;border:1px solid var(--line);border-radius:9px;color:var(--text);font-size:13px;resize:none;outline:none;transition:border-color .15s;font-family:inherit}
+.msg-textarea:focus{border-color:var(--blue)}
+.msg-preview-screen{background:#080d14;border:1px solid var(--line2);border-radius:10px;height:140px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;margin-bottom:14px}
+.msg-preview-screen::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:12px 12px;pointer-events:none}
+.msg-preview-screen-title{position:absolute;top:10px;left:12px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.msg-preview-screen-title .dot{width:6px;height:6px;border-radius:50%;background:#388bfd;box-shadow:0 0 6px #388bfd}
+.msg-ticker-bar{background:rgba(220,38,38,.88);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(220,38,38,.3);position:relative;z-index:2;overflow:hidden;white-space:nowrap}
+.msg-ticker-text{animation:tickerScroll 14s linear infinite;display:inline-block}
+@keyframes tickerScroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.msg-history-list{display:flex;flex-direction:column;gap:10px;padding:14px}
+.msg-history-item{background:#151d28;border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;transition:border-color .15s}
+.msg-history-item:hover{border-color:var(--line2)}
+.msg-history-text{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;line-height:1.5}
+.msg-history-meta{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--muted)}
+
 /* ---------- 窄屏设备条 ---------- */
 .device-inline{display:none;align-items:center;justify-content:space-between;gap:12px;
   padding:12px 14px;margin-bottom:14px;border:1px solid var(--line);border-radius:12px;background:#111721}
@@ -504,7 +547,7 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
   .segmented{overflow-x:auto}
   .modal-root{padding:12px;align-items:end}
   .modal{width:100%;border-radius:16px 16px 0 0}
-  .mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;
+  .mobile-nav{display:grid;grid-template-columns:repeat(6,1fr);position:fixed;left:0;right:0;bottom:0;
     height:64px;border-top:1px solid var(--line);background:rgba(12,16,22,.96);backdrop-filter:blur(16px);z-index:20}
   .mobile-nav button{border:0;background:none;color:#6f7e91;font-size:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
   .mobile-nav button.active{color:#7fb1f6}
@@ -539,6 +582,14 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
       <button class="nav-btn" data-view="devices">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M9 21h6M12 18v3"/></svg>
         <span>设备管理</span>
+      </button>
+      <button class="nav-btn" data-view="users">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>用户管理</span>
+      </button>
+      <button class="nav-btn" data-view="messages">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span>消息推送</span>
       </button>
     </nav>
     <div class="side-device">
@@ -770,6 +821,214 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
         </div>
       </section>
 
+      <!-- ---------- 用户管理 ---------- -->
+      <section class="view" id="view-users">
+        <div class="user-layout">
+          <div class="user-head">
+            <div class="user-toolbar">
+              <input class="search dev-placeholder-func" placeholder="搜索用户名、昵称或权限..." style="max-width:280px">
+              <div class="segmented">
+                <button class="active dev-placeholder-func">全部用户</button>
+                <button class="dev-placeholder-func">管理员</button>
+                <button class="dev-placeholder-func">操作员</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn dev-placeholder-func">角色权限</button>
+              <button class="btn primary dev-placeholder-func">＋ 添加用户</button>
+            </div>
+          </div>
+          <div class="user-table-wrap">
+            <table class="user-table">
+              <thead>
+                <tr>
+                  <th>用户信息</th>
+                  <th>系统角色</th>
+                  <th>授权大屏</th>
+                  <th>账号状态</th>
+                  <th>最后登录</th>
+                  <th style="text-align:right">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="user-profile">
+                      <span class="user-avatar">AD</span>
+                      <div>
+                        <div class="user-meta-name">admin (系统主账号)</div>
+                        <div class="user-meta-account">admin@castflow.local</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge admin">超级管理员</span></td>
+                  <td>全部设备 (不受限)</td>
+                  <td><span class="online"><i class="dot"></i>当前在线</span></td>
+                  <td>刚刚</td>
+                  <td style="text-align:right">
+                    <div class="user-actions" style="justify-content:flex-end">
+                      <button class="btn dev-placeholder-func">权限</button>
+                      <button class="btn dev-placeholder-func">修改</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="user-profile">
+                      <span class="user-avatar op">OP</span>
+                      <div>
+                        <div class="user-meta-name">operator_exhibit</div>
+                        <div class="user-meta-account">op_display@castflow.local</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge op">大屏播发员</span></td>
+                  <td>大屏设备</td>
+                  <td><span class="online"><i class="dot"></i>正常</span></td>
+                  <td>2 小时前</td>
+                  <td style="text-align:right">
+                    <div class="user-actions" style="justify-content:flex-end">
+                      <button class="btn dev-placeholder-func">权限</button>
+                      <button class="btn dev-placeholder-func">修改</button>
+                      <button class="btn dev-placeholder-func">重置</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="user-profile">
+                      <span class="user-avatar guest">GT</span>
+                      <div>
+                        <div class="user-meta-name">guest_viewer</div>
+                        <div class="user-meta-account">guest@castflow.local</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="role-badge guest">受限访客</span></td>
+                  <td>只读查看</td>
+                  <td><span style="color:var(--muted)">正常</span></td>
+                  <td>昨天 16:40</td>
+                  <td style="text-align:right">
+                    <div class="user-actions" style="justify-content:flex-end">
+                      <button class="btn dev-placeholder-func">权限</button>
+                      <button class="btn dev-placeholder-func">修改</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- 消息推送 ---------- -->
+      <section class="view" id="view-messages">
+        <div class="msg-layout">
+          <!-- 左侧：消息编辑发布 -->
+          <div class="msg-card">
+            <div class="card-title">
+              <span>大屏即时插播消息</span>
+              <span class="online"><i class="dot"></i>广播通道就绪</span>
+            </div>
+            <div class="msg-card-body">
+              <div class="msg-form-item">
+                <label>目标大屏</label>
+                <select class="field dev-placeholder-func">
+                  <option>大屏设备 (127.0.0.1:9222)</option>
+                  <option>全网广播 (所有在线大屏)</option>
+                </select>
+              </div>
+
+              <div class="msg-form-item">
+                <label>呈现模式</label>
+                <div class="sched-segmented">
+                  <button type="button" class="sched-seg-btn active dev-placeholder-func">底部跑马灯</button>
+                  <button type="button" class="sched-seg-btn dev-placeholder-func">居中通知卡片</button>
+                  <button type="button" class="sched-seg-btn dev-placeholder-func">紧急全屏插播</button>
+                </div>
+              </div>
+
+              <div class="msg-form-item">
+                <label>消息正文</label>
+                <textarea class="msg-textarea" placeholder="输入要推送到大屏的文字内容，例如：热烈欢迎各位领导专家莅临参观指导！"></textarea>
+                <div class="sched-tags" style="margin-top:6px">
+                  <span class="sched-tag dev-placeholder-func">欢迎莅临指导</span>
+                  <span class="sched-tag dev-placeholder-func">紧急会议通知</span>
+                  <span class="sched-tag dev-placeholder-func">恶劣天气预警</span>
+                </div>
+              </div>
+
+              <div class="msg-form-item">
+                <label>持续时长</label>
+                <select class="field dev-placeholder-func">
+                  <option>展示 15 秒后自动消失</option>
+                  <option>展示 30 秒后自动消失</option>
+                  <option>展示 60 秒后自动消失</option>
+                  <option>持续轮播至手动撤回</option>
+                </select>
+              </div>
+
+              <div style="display:flex;gap:10px;margin-top:6px">
+                <button class="btn dev-placeholder-func" style="flex:1">预览效果</button>
+                <button class="btn primary dev-placeholder-func" style="flex:1">立即推送到大屏</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：屏幕模拟预览与推送记录 -->
+          <div class="msg-card">
+            <div class="card-title">
+              <span>屏幕实时模拟与历史推送</span>
+              <button class="btn dev-placeholder-func" style="height:32px;font-size:11.5px">清空历史</button>
+            </div>
+            <div style="padding:16px">
+              <!-- 大屏微缩模拟窗口 -->
+              <div class="msg-preview-screen">
+                <div class="msg-preview-screen-title"><i class="dot"></i>大屏模拟预览</div>
+                <div class="msg-ticker-bar">
+                  <span class="msg-ticker-text">📢 【插播通知】热烈欢迎各位领导专家莅临 CastFlow 展厅参观指导！祝参观交流圆满成功！</span>
+                </div>
+              </div>
+
+              <!-- 历史推送 -->
+              <div class="card-title" style="border:0;padding:0 0 10px 0;height:auto;font-size:13px">
+                <span>近期推送记录</span>
+              </div>
+              <div class="msg-history-list" style="padding:0">
+                <div class="msg-history-item">
+                  <div style="min-width:0;flex:1">
+                    <div class="msg-history-text">热烈欢迎各位领导专家莅临 CastFlow 展厅参观指导！</div>
+                    <div class="msg-history-meta">
+                      <span class="online"><i class="dot"></i>已送达大屏</span>
+                      <span>底部跑马灯</span>
+                      <span>10 分钟前</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:6px;flex:none">
+                    <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px">重发</button>
+                    <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px">撤回</button>
+                  </div>
+                </div>
+
+                <div class="msg-history-item">
+                  <div style="min-width:0;flex:1">
+                    <div class="msg-history-text">全体注意：今日 16:30 将进行展厅消防联动系统例行测试。</div>
+                    <div class="msg-history-meta">
+                      <span>已结束</span>
+                      <span>居中通知卡片</span>
+                      <span>昨天 15:20</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:6px;flex:none">
+                    <button class="btn dev-placeholder-func" style="height:28px;padding:0 8px;font-size:11px">重发</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- 页面底部开源与 GitHub 链接 -->
       <footer class="site-footer">
         <span>CastFlow · 大屏智能投放与展示系统</span>
@@ -828,6 +1087,12 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
   </button>
   <button data-view="devices">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="13" rx="2"/></svg>设备
+  </button>
+  <button data-view="users">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>用户
+  </button>
+  <button data-view="messages">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>消息
   </button>
 </nav>
 
@@ -971,13 +1236,20 @@ function openForm({ title, fields, ok = '确定', onOk }) {
 }
 
 /* ---------- 视图切换 ---------- */
-const TITLES = { cast: '投放', schedule: '排期', library: '内容库', devices: '设备管理' };
+const TITLES = {
+  cast: '投放',
+  schedule: '排期',
+  library: '内容库',
+  devices: '设备管理',
+  users: '用户管理',
+  messages: '消息推送',
+};
 let currentDeviceName = '大屏设备';
 
 function showView(v) {
   for (const x of document.querySelectorAll('.view')) x.classList.toggle('active', x.id === 'view-' + v);
   for (const x of document.querySelectorAll('[data-view]')) x.classList.toggle('active', x.dataset.view === v);
-  $('pageTitle').textContent = TITLES[v];
+  $('pageTitle').textContent = TITLES[v] || '控制台';
   $('pageSub').hidden = v !== 'cast';
   closeLibPop();
   if (v === 'cast') { refreshStatus(); refreshShot(); refreshTabs(); startShotTimer(); }
@@ -989,6 +1261,15 @@ function showView(v) {
 }
 
 for (const b of document.querySelectorAll('[data-view]')) b.onclick = () => showView(b.dataset.view);
+
+// 暂未接入后端的功能统一轻提示
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('.dev-placeholder-func');
+  if (el) {
+    e.preventDefault();
+    toast('该功能正在开发中…');
+  }
+});
 
 /* ---------- 设备名 ---------- */
 function applyDeviceName(name) {
