@@ -19,7 +19,7 @@ const P = require('./paths');
 
 const DEFAULTS = {
   target: '127.0.0.1:9222',        // 本机回环 + Chrome 标准调试端口
-  port: 8080,
+  port: 18089,
   settleMs: 1500,
   memoryLimitMb: 400,
   memoryCheckSec: 60,

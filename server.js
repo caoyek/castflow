@@ -1,5 +1,12 @@
 'use strict';
 
+process.on('uncaughtException', (err) => {
+  console.error('[UncaughtException]', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[UnhandledRejection]', reason);
+});
+
 const http = require('http');
 const fs = require('fs');
 const os = require('os');
@@ -36,6 +43,7 @@ const MIME = {
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
+  '.ico': 'image/x-icon',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.gif': 'image/gif',
@@ -533,6 +541,16 @@ const server = http.createServer(async (req, res) => {
       return serveFile(req, res, file);
     }
 
+    // 兜底 public 静态资源服务（logo.png、favicon.png、favicon.ico 等）
+    const publicPath = path.normalize(path.join(PUBLIC_DIR, pathname));
+    if (publicPath.startsWith(path.normalize(PUBLIC_DIR)) && fs.existsSync(publicPath)) {
+      try {
+        if (fs.statSync(publicPath).isFile()) {
+          return serveFile(req, res, publicPath);
+        }
+      } catch { }
+    }
+
     return json(res, 404, { error: 'not found' });
   } catch (err) {
     return json(res, 500, { error: err.message });
@@ -656,6 +674,10 @@ setInterval(async () => {
 }, 30 * 1000);
 
 // ---- 启动 ----
+server.on('error', (err) => {
+  console.error('[Server Error]', err);
+});
+
 server.listen(config.port, '0.0.0.0', () => {
   console.log(`控制台   ${PUBLIC_BASE}`);
   console.log(`本机设置 http://127.0.0.1:${config.port}`);

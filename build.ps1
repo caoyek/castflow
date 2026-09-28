@@ -1,4 +1,4 @@
-﻿<#
+<#
   CastFlow 打包脚本
 
   用法：  powershell -ExecutionPolicy Bypass -File build.ps1
@@ -49,7 +49,8 @@ Write-Host '  [3/4] 拼装运行时文件…' -ForegroundColor DarkGray
 New-Item -ItemType Directory -Force $App | Out-Null
 Copy-Item $Exe $App
 Copy-Item 'topmost.ps1' $App
-Copy-Item 'castflow.ps1' $App
+if (Test-Path 'CastFlowManager.exe') { Copy-Item 'CastFlowManager.exe' $App }
+if (Test-Path 'app.ico') { Copy-Item 'app.ico' $App }
 Copy-Item 'public' $App -Recurse
 New-Item -ItemType Directory -Force (Join-Path $App 'media') | Out-Null
 

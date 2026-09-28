@@ -16,7 +16,7 @@
 #define AppName "CastFlow"
 #define AppVersion "1.0.0"
 #define AppExe "CastFlow.exe"
-#define WebPort "8080"
+#define WebPort "18089"
 
 [Setup]
 AppId={{8F3A5C21-4B7E-4D92-A6C1-3E5D7B9F0A24}
@@ -47,7 +47,7 @@ Name: "autostart"; Description: "开机自动启动（推荐）"; GroupDescripti
 Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "启动选项："
 
 [Files]
-; 整个运行时目录：CastFlow.exe + public\ + topmost.ps1 + castflow.ps1
+; 整个运行时目录：CastFlow.exe + CastFlowManager.exe + public\ + topmost.ps1
 Source: "dist\{#AppName}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; 数据目录：只在不存在时放一份空的，升级时不会覆盖用户数据
 Source: "dist\{#AppName}\media\*"; DestDir: "{app}\media"; Flags: onlyifdoesntexist skipifsourcedoesntexist
@@ -60,13 +60,11 @@ Name: "{app}\media"; Permissions: users-modify
 Name: "{app}\chrome-profile"; Permissions: users-modify
 
 [Icons]
-; 两个入口：网页控制台（日常投放用）和本机菜单（服务挂了也能用，能启停服务）
-; 本机菜单是 .ps1：快捷方式要指 powershell.exe 而不是脚本本身，因为默认执行策略
-; 可能禁止跑脚本，得显式带 -ExecutionPolicy Bypass；powershell 路径写绝对，别指望 PATH。
-Name: "{autodesktop}\{#AppName} 控制台"; Filename: "http://127.0.0.1:{#WebPort}"; Tasks: desktopicon
-Name: "{autodesktop}\{#AppName} 本机菜单"; Filename: "{win}\System32\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\castflow.ps1"""; WorkingDirectory: "{app}"; Tasks: desktopicon
-Name: "{group}\{#AppName} 控制台"; Filename: "http://127.0.0.1:{#WebPort}"
-Name: "{group}\{#AppName} 本机菜单"; Filename: "{win}\System32\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\castflow.ps1"""; WorkingDirectory: "{app}"
+; 两个入口：网页控制台（日常远程投放用）和桌面控制台程序（GUI 管理面板，带托盘常驻守护）
+Name: "{autodesktop}\{#AppName} Web 控制台"; Filename: "http://127.0.0.1:{#WebPort}"; Tasks: desktopicon
+Name: "{autodesktop}\{#AppName} 控制台"; Filename: "{app}\CastFlowManager.exe"; WorkingDirectory: "{app}"; IconFilename: "{app}\app.ico"; Tasks: desktopicon
+Name: "{group}\{#AppName} Web 控制台"; Filename: "http://127.0.0.1:{#WebPort}"
+Name: "{group}\{#AppName} 控制台"; Filename: "{app}\CastFlowManager.exe"; WorkingDirectory: "{app}"; IconFilename: "{app}\app.ico"
 
 [Run]
 ; ---- 防火墙：只放行控制台端口 ----
@@ -79,20 +77,9 @@ Filename: "powercfg"; Parameters: "/change standby-timeout-ac 0"; Flags: runhidd
 Filename: "powercfg"; Parameters: "/change hibernate-timeout-ac 0"; Flags: runhidden
 
 ; ---- 计划任务：登录时启动服务 ----
-; 注意：不能用 SYSTEM。SYSTEM 在会话 0，它启动的 GUI 程序在屏幕上根本看不见，
-; Chrome 起来了但大屏是黑的，而且不报任何错。
-;
-; 用 Register-ScheduledTask 而不是 schtasks：schtasks 的 /tr 参数要嵌一层引号
-; （路径带空格），套进 Inno Setup 的 "" 转义后是三层引号，几乎必错。
-; cmdlet 的参数用单引号包住，一层就够。
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Unregister-ScheduledTask -TaskName '{#AppName}' -Confirm:$false -ErrorAction SilentlyContinue"""; Flags: runhidden; StatusMsg: "配置开机自启…"
-; 开机自启跑的是本机菜单脚本 castflow.ps1（它一打开就自动起服务），
-; 并且用 cmd 的 start /min 包一层：窗口最小化到任务栏，不盖住大屏、不抢焦点，
-; 而且这个窗口会一直留着 —— 出问题可以点开看状态和日志。
-; 那串 [char]34 就是双引号 —— start 要求「带引号的路径」前面必须有个标题参数，
-; 而 Inno 的 "" 转义和 powershell -Command 的引号解析叠在一起极易出错（见 PACKAGING.md），
-; 用 [char]34 拼出来就不用去数到底有几层引号。
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$a=New-ScheduledTaskAction -Execute $env:ComSpec -Argument ('/c start ' + [char]34 + [char]34 + ' /min ' + [char]34 + '{sys}\WindowsPowerShell\v1.0\powershell.exe' + [char]34 + ' -NoProfile -ExecutionPolicy Bypass -File ' + [char]34 + '{app}\castflow.ps1' + [char]34) -WorkingDirectory '{app}'; $t=New-ScheduledTaskTrigger -AtLogOn; Register-ScheduledTask -TaskName '{#AppName}' -Action $a -Trigger $t -Force | Out-Null"""; Flags: runhidden; Tasks: autostart
+; 开机自启：静默拉起 CastFlow.exe --autostart（自动带出 Chrome 大屏并运行后台控制服务）
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$a=New-ScheduledTaskAction -Execute '{app}\{#AppExe}' -Argument '--autostart' -WorkingDirectory '{app}'; $t=New-ScheduledTaskTrigger -AtLogOn; Register-ScheduledTask -TaskName '{#AppName}' -Action $a -Trigger $t -Force | Out-Null"""; Flags: runhidden; Tasks: autostart
 
 ; ---- 启动 ----
 Filename: "{app}\{#AppExe}"; Parameters: "--autostart"; Flags: nowait runhidden postinstall skipifsilent; StatusMsg: "启动服务…"

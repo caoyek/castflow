@@ -1,6 +1,6 @@
-{
+﻿{
   "target": "127.0.0.1:9222",
-  "port": 8080,
+  "port": 18089,
   "publicBase": "auto",
   "settleMs": 1500,
   "memoryLimitMb": 400,

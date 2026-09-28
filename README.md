@@ -52,7 +52,7 @@
   - **定时维护重启**：支持每天/每周指定闲时时刻（如凌晨 04:00）全自动重启浏览器，彻底释放句柄与显存。
 - 🔒 **硬件级窗口置顶**：原生集成 Win32 API `SetWindowPos(HWND_TOPMOST)`，即便有杀毒软件弹窗或系统通知，也无法遮挡大屏。
 - 🛠️ **精巧的运维支持**：
-  - 提供纯 PowerShell 编写的交互式运维终端（`castflow.ps1`，带 UTF-8 BOM，彻底解决 Windows 控制台乱码与语法拆散问题）；
+  - 提供轻量级 Windows 原生桌面控制台（`CastFlowManager.exe`，暗黑科技质感 UI，托盘常驻守护，无命令行黑框弹窗）；
   - 提供一键 Inno Setup 完整安装包，安装时自动配置 Windows 防火墙规则、自动禁用系统睡眠熄屏策略、自动注册用户交互式计划任务。
 
 ---
@@ -67,10 +67,10 @@ flowchart TD
     end
 
     subgraph Server["CastFlow 服务核心 (Windows PC / 迷你工控机)"]
-        B1["HTTP Server / RESTful API :8080"]
+        B1["HTTP Server / RESTful API :18089"]
         B2["静态媒体分片服务 / Range 206"]
         B3["看门狗守护循环 Watchdog"]
-        B4["本机运维菜单 castflow.ps1"]
+        B4["桌面控制台程序 CastFlowManager.exe"]
         B5["Win32 API user32.dll 置顶调度"]
     end
 
@@ -124,21 +124,16 @@ npm start
 npm run autostart
 ```
 
-控制台默认监听 `8080` 端口，通过浏览器访问 `http://localhost:8080` 即可开始使用。
+控制台默认监听 `18089` 端口，通过浏览器访问 `http://localhost:18089` 即可开始使用。
 
-### 方式三：本机 PowerShell 交互控制
+### 方式三：本机桌面控制台程序（GUI 运维面板）
 
-项目内置了现代 PowerShell 交互终端，可随时排障或手动操作：
+双击运行根目录下的 `CastFlowManager.exe` 即可打开暗黑科技风格的桌面管理面板（亦可在任务栏托盘常驻持续守护）：
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File castflow.ps1
-```
-
-控制菜单支持：
-- `[1] 启动控制服务` / `[2] 停止控制服务`
-- `[3] 开启大屏` / `[4] 关闭大屏`
-- `[5] 查看运行日志` / `[6] 打开本地控制台`
-- `[7] 一键注册/取消开机自启`
+- 核心状态一目了然：服务运行状态、Chrome 标签页状态、本机访问地址
+- 开机与启动默认页：直接在面板内配置默认展示网址，支持一键保存
+- 一键管理操作：`[1] 启动服务` / `[2] 停止服务` / `[3] 重启服务`
+- 系统级守护联动：开机自启开关、定时关机设置、查看系统日志
 
 ---
 
@@ -156,10 +151,11 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 
 打包完成后将在 `dist/CastFlow/` 目录下生成全部免安装运行时文件：
 - `CastFlow.exe`（内置 Node 22 运行时的完整控制程序）
+- `CastFlowManager.exe`（Windows 原生桌面管理控制台）
+- `app.ico`（应用图标）
 - `public/`（Web 控制台静态文件）
 - `media/`（多媒体存放目录）
 - `topmost.ps1`（窗口置顶脚本）
-- `castflow.ps1`（运维菜单）
 
 ### 2. 编译 Inno Setup 安装包
 

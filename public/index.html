@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CastFlow</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="shortcut icon" href="/favicon.ico">
 <style>
 :root{
   --bg:#090c11;--sidebar:#0c1016;--panel:#111720;--raised:#18212d;
@@ -37,9 +39,8 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
   border-right:1px solid rgba(255,255,255,.08);background:var(--sidebar);
   display:flex;flex-direction:column}
 .logo{display:flex;align-items:center;gap:11px;height:44px;padding:0 9px;margin-bottom:24px}
-.logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(140deg,#6aa7ff,#685ff2);
-  display:grid;place-items:center;box-shadow:0 8px 24px rgba(80,120,240,.28);flex:none}
-.logo-mark svg{width:18px;height:18px}
+.logo-mark{width:36px;height:36px;object-fit:contain;background:transparent;
+  display:block;filter:drop-shadow(0 0 10px rgba(0,210,255,0.35));flex:none}
 .logo-word{font-size:16px;font-weight:760;letter-spacing:-.015em;white-space:nowrap}
 .nav-label{padding:0 11px 8px;color:#4f5c6d;font-size:10px;letter-spacing:.12em}
 .nav{display:flex;flex-direction:column;gap:5px}
@@ -135,10 +136,10 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .tabs-head{display:flex;align-items:center;justify-content:space-between;padding:4px 5px 10px;color:#768396;font-size:11px}
 .tabs-head button{width:28px;height:28px;border:1px solid #303b4a;border-radius:8px;background:#161d27;color:#9ba9b9;font-size:14px;display:grid;place-items:center;transition:background .15s,border-color .15s,color .15s}
 .tabs-head button:hover{background:#1d2734;border-color:#40516a;color:#fff}
-.tabs-head button.on{background:#1b2b43;border-color:var(--blue-line);color:#8ebcf4}
-.browser-tab{min-height:52px;border:0;border-radius:9px;background:transparent;color:#8996a6;
-  padding:8px;display:grid;grid-template-columns:28px minmax(0,1fr) 22px;align-items:center;gap:8px;
-  text-align:left;margin-bottom:4px;transition:background .15s}
+#tabList{display:flex;flex-direction:column;width:100%}
+.browser-tab{width:100%;box-sizing:border-box;min-height:52px;border:0;border-radius:9px;background:transparent;color:#8996a6;
+  padding:8px 10px;display:grid;grid-template-columns:28px minmax(0,1fr) 22px;align-items:center;gap:8px;
+  text-align:left;margin-bottom:5px;cursor:pointer;transition:background .15s,color .15s}
 .browser-tab:hover{background:#171f2a}
 .browser-tab.active{background:#1d2d44;color:#e7edf4}
 .favicon{width:28px;height:28px;border-radius:7px;background:#24334a;display:grid;place-items:center;color:#75aaf0;font-size:10px;font-weight:700;flex:none}
@@ -394,7 +395,8 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
   .tabs-head{display:flex;flex-direction:row;align-items:center;padding:0 4px 0 0;gap:6px;flex:none}
   .tabs-head>span{display:none}
   .tabs-empty{display:none}
-  .browser-tab{min-width:180px;margin:0}
+  #tabList{display:flex;flex-direction:row;gap:6px;flex:1}
+  .browser-tab{width:auto;min-width:180px;max-width:240px;margin:0;flex:none}
   .chrome-toolbar{height:52px;padding:0 8px;gap:4px}
   .address{height:36px}
   .cast-btn{height:36px;min-width:62px}
@@ -425,9 +427,7 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
   <!-- ================= 侧边栏 ================= -->
   <aside class="sidebar">
     <div class="logo">
-      <div class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 17 9 12l4 4 7-8"/><path d="M15 8h5v5"/></svg>
-      </div>
+      <img class="logo-mark" src="/logo.png" alt="CastFlow Logo">
       <span class="logo-word">CastFlow</span>
     </div>
     <div class="nav-label">控制台</div>
