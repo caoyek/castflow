@@ -628,12 +628,12 @@ namespace CastFlow.Manager
             btnQuit.FontSize = 14;
             btnQuit.FontWeight = FontWeights.Bold;
             btnQuit.Margin = new Thickness(14, 0, 0, 0);
-            btnQuit.Click += (s, e) =>
+            btnQuit.Click += async (s, e) =>
             {
-                if (System.Windows.MessageBox.Show("确定要退出 CastFlow 大屏控制台吗？\n(退出后将关闭后台服务与托盘守护)", "退出确认", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                if (System.Windows.MessageBox.Show("确定要退出 CastFlow 大屏控制台吗？\n(退出后将彻底停止后台服务与大屏浏览器)", "退出确认", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
-                    _trayIcon.Visible = false;
-                    System.Windows.Application.Current.Shutdown();
+                    btnQuit.IsEnabled = false;
+                    await SafeExitAsync();
                 }
             };
             Grid.SetColumn(btnQuit, 1);
@@ -801,10 +801,9 @@ namespace CastFlow.Manager
                 catch { }
             });
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add("退出 CastFlow", null, (s, e) =>
+            menu.Items.Add("退出 CastFlow", null, async (s, e) =>
             {
-                _trayIcon.Visible = false;
-                System.Windows.Application.Current.Shutdown();
+                await SafeExitAsync();
             });
 
             _trayIcon = new NotifyIcon
@@ -1057,6 +1056,9 @@ namespace CastFlow.Manager
                 {
                     try { p.Kill(); } catch { }
                 }
+
+                // 5. 确保带调试端口的 Chrome 彻底退出，避免残留孤儿浏览器
+                KillChromeDebuggerProcess();
 
                 _currentServerPid = 0;
                 ApplyState(null, null); // 立即更新 UI 为停止状态
@@ -1447,6 +1449,50 @@ namespace CastFlow.Manager
             if (end > start && int.TryParse(json.Substring(start, end - start), out val))
                 return val;
             return fallback;
+        }
+
+        private void KillChromeDebuggerProcess()
+        {
+            try
+            {
+                KillProcessOnPort(9222);
+            }
+            catch { }
+
+            try
+            {
+                string cmd = "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq 'chrome.exe' -and $_.CommandLine -match 'remote-debugging' } | ForEach-Object { taskkill /F /T /PID $_.ProcessId }";
+                var psi = new ProcessStartInfo("powershell", "-NoProfile -Command \"" + cmd + "\"")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                };
+                var proc = Process.Start(psi);
+                if (proc != null) proc.WaitForExit(2500);
+            }
+            catch { }
+        }
+
+        private async Task SafeExitAsync()
+        {
+            try
+            {
+                SetHint("正在停止后台服务与大屏，准备退出…");
+                await ActionStopAsync();
+            }
+            catch { }
+
+            try
+            {
+                if (_trayIcon != null)
+                {
+                    _trayIcon.Visible = false;
+                    _trayIcon.Dispose();
+                }
+            }
+            catch { }
+
+            System.Windows.Application.Current.Shutdown();
         }
     }
 }
