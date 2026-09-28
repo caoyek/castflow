@@ -417,9 +417,10 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .sched-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;transition:border-color .2s,box-shadow .2s;position:relative}
 .sched-card:hover{border-color:var(--line2)}
 .sched-card.active{border-color:#388bfd;box-shadow:0 0 24px rgba(56,139,253,.15);background:linear-gradient(180deg,#151e2c,#111720)}
-.sched-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.sched-time-range{font-size:17px;font-weight:750;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--text);display:flex;align-items:center;gap:8px}
+.sched-card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sched-time-range{font-size:16px;font-weight:750;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--text);display:flex;align-items:center;gap:8px}
 .sched-card-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;flex:none}
+.sched-card-badge svg{display:block;flex:none}
 .sched-card-badge.type-web{background:rgba(56,139,253,.14);color:#79b8ff;border:1px solid rgba(56,139,253,.3)}
 .sched-card-badge.type-video{background:rgba(168,85,247,.14);color:#d8b4fe;border:1px solid rgba(168,85,247,.3)}
 .sched-card-badge.type-image{background:rgba(16,185,129,.14);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
@@ -429,10 +430,13 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .sched-card-body{min-width:0}
 .sched-card-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sched-card-target{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
-.sched-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
-.sched-card-foot-left{display:flex;align-items:center;gap:6px}
+.sched-card-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)}
+.sched-card-foot-left{display:flex;align-items:center}
 .sched-card-foot-right{display:flex;align-items:center;gap:6px}
-.sched-card-foot button{height:30px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:#151c26;color:#9dacbd;font-size:11.5px;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.sched-card-foot .sched-switch{height:32px;padding:0 10px;font-size:11.5px;border-radius:8px;gap:7px}
+.sched-card-foot button{height:32px;padding:0 11px;border:1px solid var(--line);border-radius:8px;background:#151c26;color:#9dacbd;font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:all .15s}
+.sched-card-foot button svg{width:13px;height:13px;display:block;flex:none}
+.sched-card-foot button.rule-del{padding:0 9px}
 .sched-card-foot button:hover{background:#1d2734;border-color:var(--line2);color:#fff}
 .sched-card-foot button.danger:hover{background:#dc2626;border-color:#dc2626;color:#fff}
 .sched-card.disabled{opacity:.45}
@@ -500,14 +504,8 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
 .push-task-name{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
 .push-task-target{font-size:11px;color:var(--muted);font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
 
-/* 现代化专属平滑 Switch 开关（消除偏斜出界） */
-.push-switch{position:relative;display:inline-flex;align-items:center;cursor:pointer;flex:none;margin:0;user-select:none}
-.push-switch input{position:absolute;opacity:0;width:0;height:0}
-.push-switch-track{width:38px;height:22px;background:#253041;border-radius:22px;position:relative;transition:all .2s cubic-bezier(.4,0,.2,1);display:block;border:1px solid rgba(255,255,255,.1);box-sizing:border-box}
-.push-switch-track:before{content:"";position:absolute;width:16px;height:16px;left:2px;top:2px;background:#8b9bb4;border-radius:50%;transition:all .2s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 3px rgba(0,0,0,.4)}
-.push-switch input:checked + .push-switch-track{background:#2563eb;border-color:rgba(56,139,253,.5)}
-.push-switch input:checked + .push-switch-track:before{transform:translateX(16px);background:#fff}
-.push-switch:hover .push-switch-track{filter:brightness(1.1)}
+/* 消息任务卡片开关（与排期开关严格统一规范） */
+.push-task-top .sched-switch{height:32px;padding:0 10px;font-size:11.5px;border-radius:8px;gap:7px}
 
 .push-task-events{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .push-event-tag{font-size:11px;padding:3px 8px;border-radius:5px;background:#141d28;border:1px solid var(--line);color:#94a3b8;display:inline-flex;align-items:center;line-height:1.2}
@@ -1012,9 +1010,10 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
                   <div class="push-task-target">目标: #展厅运维监控群 (qyapi.weixin.qq.com/...)</div>
                 </div>
               </div>
-              <label class="push-switch dev-placeholder-func" title="启用/暂停该任务">
+              <label class="sched-switch active dev-placeholder-func" title="启用/暂停该任务">
                 <input type="checkbox" checked>
-                <span class="push-switch-track"></span>
+                <span class="sched-slider"></span>
+                <span>已启用</span>
               </label>
             </div>
             <div>
@@ -1043,9 +1042,10 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
                   <div class="push-task-target">目标: #运营例会日报群 (oapi.dingtalk.com/...)</div>
                 </div>
               </div>
-              <label class="push-switch dev-placeholder-func" title="启用/暂停该任务">
+              <label class="sched-switch active dev-placeholder-func" title="启用/暂停该任务">
                 <input type="checkbox" checked>
-                <span class="push-switch-track"></span>
+                <span class="sched-slider"></span>
+                <span>已启用</span>
               </label>
             </div>
             <div>
@@ -1074,9 +1074,10 @@ button,input,select{font:inherit}button{cursor:pointer;color:inherit}
                   <div class="push-task-target">目标: #内容投放协作群 (open.feishu.cn/...)</div>
                 </div>
               </div>
-              <label class="push-switch dev-placeholder-func" title="启用/暂停该任务">
+              <label class="sched-switch dev-placeholder-func" title="启用/暂停该任务">
                 <input type="checkbox">
-                <span class="push-switch-track"></span>
+                <span class="sched-slider"></span>
+                <span>已暂停</span>
               </label>
             </div>
             <div>
@@ -2460,10 +2461,10 @@ function renderScheduleCards(rules, activeId, isEnabled) {
 
       <div class="sched-card-foot">
         <div class="sched-card-foot-left">
-          <label class="sched-switch" style="height:30px;padding:2px 8px;font-size:11px" title="单条启用/停用">
+          <label class="sched-switch${!isDisabled ? ' active' : ''}" title="点击开启或关闭此排期时段">
             <input type="checkbox" class="rule-toggle" ${!isDisabled ? 'checked' : ''}>
-            <span class="sched-slider" style="width:26px;height:15px"></span>
-            <span>${!isDisabled ? '已启用' : '已停用'}</span>
+            <span class="sched-slider"></span>
+            <span class="rule-toggle-text">${!isDisabled ? '已启用' : '已停用'}</span>
           </label>
         </div>
         <div class="sched-card-foot-right">
@@ -2482,9 +2483,14 @@ function renderScheduleCards(rules, activeId, isEnabled) {
       </div>
     `;
 
+    const toggleLabel = card.querySelector('.sched-switch');
     const toggleInput = card.querySelector('.rule-toggle');
+    const toggleText = card.querySelector('.rule-toggle-text');
     toggleInput.onchange = async () => {
       rule.enabled = toggleInput.checked;
+      toggleLabel.classList.toggle('active', rule.enabled);
+      toggleText.textContent = rule.enabled ? '已启用' : '已停用';
+      card.classList.toggle('disabled', !rule.enabled);
       await saveScheduleToServer();
     };
 
