@@ -62,9 +62,9 @@ Name: "{app}\chrome-profile"; Permissions: users-modify
 [Icons]
 ; 两个入口：网页控制台（日常远程投放用）和桌面控制台程序（GUI 管理面板，带托盘常驻守护）
 Name: "{autodesktop}\{#AppName} Web 控制台"; Filename: "http://127.0.0.1:{#WebPort}"; Tasks: desktopicon
-Name: "{autodesktop}\{#AppName} 控制台"; Filename: "{app}\CastFlowManager.exe"; WorkingDirectory: "{app}"; IconFilename: "{app}\app.ico"; Tasks: desktopicon
+Name: "{autodesktop}\{#AppName} 控制台"; Filename: "{app}\CastFlowManager.exe"; WorkingDir: "{app}"; IconFilename: "{app}\app.ico"; Tasks: desktopicon
 Name: "{group}\{#AppName} Web 控制台"; Filename: "http://127.0.0.1:{#WebPort}"
-Name: "{group}\{#AppName} 控制台"; Filename: "{app}\CastFlowManager.exe"; WorkingDirectory: "{app}"; IconFilename: "{app}\app.ico"
+Name: "{group}\{#AppName} 控制台"; Filename: "{app}\CastFlowManager.exe"; WorkingDir: "{app}"; IconFilename: "{app}\app.ico"
 
 [Run]
 ; ---- 防火墙：只放行控制台端口 ----
