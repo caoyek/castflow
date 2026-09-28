@@ -2409,7 +2409,8 @@ function renderScheduleTimeline(rules, activeId, isEnabled, nowTime) {
   for (const rule of rules) {
     if (rule.enabled === false) continue;
     const startM = timeToMinutes(rule.timeStart);
-    const endM = timeToMinutes(rule.timeEnd);
+    // 包含结束时刻这一整分钟（直到 59 秒 999 毫秒）
+    const endM = Math.min(1440, timeToMinutes(rule.timeEnd) + 1);
     const isActive = isEnabled && rule.id === activeId;
 
     const createBlock = (leftPct, widthPct) => {

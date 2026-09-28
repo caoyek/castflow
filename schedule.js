@@ -86,19 +86,34 @@ function getDayMs(date = new Date()) {
   return ((date.getHours() * 60 + date.getMinutes()) * 60 + date.getSeconds()) * 1000 + date.getMilliseconds();
 }
 
-// 时段字符串解析为当天的毫秒起始点
-// 起始时间为 0 秒 0 毫秒: (sH * 60 + sM) * 60 * 1000
+// 时段字符串解析为当天的毫秒起始点（从 00 秒 000 毫秒开始）
+// 例如 "14:00" -> 14:00:00.000
 function parseTimeToDayMs(timeStr) {
   if (!timeStr || typeof timeStr !== 'string') return 0;
   const parts = timeStr.trim().split(':').map(Number);
   const h = parts[0] || 0;
   const m = parts[1] || 0;
-  const s = parts[2] || 0;
+  const s = parts.length > 2 ? (parts[2] || 0) : 0;
   return ((h * 60 + m) * 60 + s) * 1000;
 }
 
-// 检查当前时刻是否在 [start, end) 范围内，支持跨午夜（如 22:00 到 08:00）
-// 模式 A：起始时间为 0 秒 000 毫秒；结束时间为最后一毫秒 (endBoundaryMs - 1 毫秒)
+// 时段字符串解析为当天的毫秒结束点（包含截止时间最后一毫秒 999ms）
+// 例如输入 "18:10"，包含整整 18:10 分这一分钟，直到 18:10:59.999 最后一毫秒
+function parseTimeToDayEndMs(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return 86399999;
+  const parts = timeStr.trim().split(':').map(Number);
+  const h = parts[0] || 0;
+  const m = parts[1] || 0;
+  if (parts.length > 2) {
+    const s = parts[2] || 0;
+    return ((h * 60 + m) * 60 + s) * 1000 + 999;
+  }
+  // 未指定秒时，默认覆盖到该分钟最后一秒最后一毫秒 59秒 999毫秒
+  return ((h * 60 + m) * 60 + 59) * 1000 + 999;
+}
+
+// 检查当前时刻是否在 [startMs, endMs] 闭区间范围内，支持跨午夜（如 22:00 到 08:00）
+// 起始时间为 0 秒 000 毫秒；结束时间为当前分钟的最后一毫秒 59 秒 999 毫秒
 function isTimeInRangeMs(nowOrMs, startStr, endStr) {
   if (!startStr || !endStr) return false;
   if (startStr === endStr) return true; // 全天 24 小时生效
@@ -107,18 +122,17 @@ function isTimeInRangeMs(nowOrMs, startStr, endStr) {
     ? nowOrMs
     : getDayMs(nowOrMs instanceof Date ? nowOrMs : new Date());
 
-  const startMs = parseTimeToDayMs(startStr);       // 0秒 0毫秒起
-  const endBoundaryMs = parseTimeToDayMs(endStr);   // 结束时刻分界点
+  const startMs = parseTimeToDayMs(startStr);       // 0秒 000毫秒起
+  const endMs = parseTimeToDayEndMs(endStr);        // 59秒 999毫秒止
 
-  if (startMs < endBoundaryMs) {
-    // 正常同日时段：[startMs, endBoundaryMs)
-    // 最后一毫秒为 endBoundaryMs - 1 ms（如 12:00:00 前的 11:59:59.999）
-    return currentMs >= startMs && currentMs < endBoundaryMs;
+  if (startMs <= endMs) {
+    // 正常同日时段：[startMs, endMs]，包含整个结束分钟最后一毫秒
+    return currentMs >= startMs && currentMs <= endMs;
   }
 
   // 跨午夜时段（例如 22:00 到 08:00）：
-  // [startMs, 86400000) 或 [0, endBoundaryMs)
-  return currentMs >= startMs || currentMs < endBoundaryMs;
+  // [startMs, 86399999] 或 [0, endMs]
+  return currentMs >= startMs || currentMs <= endMs;
 }
 
 function isTimeInRange(nowTime, start, end) {
@@ -309,4 +323,5 @@ module.exports = {
   isTimeInRangeMs,
   getDayMs,
   parseTimeToDayMs,
+  parseTimeToDayEndMs,
 };
