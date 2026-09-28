@@ -37,12 +37,11 @@ function buildChromeArgs(config, cdpPort) {
   ];
 }
 
-// Chrome 写在注册表里的安装路径。这是 Windows 标准的应用查找位置，
-// 比猜目录可靠 —— 用户把 Chrome 装到非默认位置时只有它能找到。
-function chromeFromRegistry() {
+// 在注册表中查找应用安装路径（Windows 标准查找路径）
+function appFromRegistry(exeName) {
   const keys = [
-    'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe',
-    'HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe',
+    `HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\${exeName}`,
+    `HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\${exeName}`,
   ];
   for (const key of keys) {
     try {
@@ -57,23 +56,49 @@ function chromeFromRegistry() {
   return null;
 }
 
-// Chrome 装在哪儿完全自适应：注册表 → 三个常见位置。
-// 查过一次就缓存，省得每次调 API 都去读注册表。
-let chromeCache;
-
-function resolveChrome(configured) {
-  if (configured && fs.existsSync(configured)) return configured;   // config 里指定了就用它
-  if (chromeCache !== undefined) return chromeCache;
-
-  chromeCache = chromeFromRegistry()
+function findChrome() {
+  return appFromRegistry('chrome.exe')
     || [
       path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Google\\Chrome\\Application\\chrome.exe'),
       path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Google\\Chrome\\Application\\chrome.exe'),
       path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
     ].find((p) => fs.existsSync(p))
     || null;
+}
 
-  return chromeCache;
+function findEdge() {
+  return appFromRegistry('msedge.exe')
+    || [
+      path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Microsoft\\Edge\\Application\\msedge.exe'),
+      path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Microsoft\\Edge\\Application\\msedge.exe'),
+      path.join(process.env.LOCALAPPDATA || '', 'Microsoft\\Edge\\Application\\msedge.exe'),
+    ].find((p) => fs.existsSync(p))
+    || null;
+}
+
+let chromeCache;
+
+function resolveChrome(configured) {
+  if (configured && fs.existsSync(configured)) return configured;   // config 里指定了就用它
+  if (chromeCache !== undefined) return chromeCache;
+
+  // 1. 首选：Google Chrome
+  const chrome = findChrome();
+  if (chrome) {
+    chromeCache = chrome;
+    return chromeCache;
+  }
+
+  // 2. 备选：Microsoft Edge（同为 Chromium 内核，CDP 协议完全兼容）
+  const edge = findEdge();
+  if (edge) {
+    console.log('[浏览器引擎] 未检测到 Chrome，检测到 Microsoft Edge，将作为备选渲染引擎');
+    chromeCache = edge;
+    return chromeCache;
+  }
+
+  chromeCache = null;
+  return null;
 }
 
 // 脱离父进程独立运行：控制端重启不会把 Chrome 一起带走

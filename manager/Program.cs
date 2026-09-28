@@ -111,6 +111,8 @@ namespace CastFlow.Manager
         private string _cachedNodeVer = "--";
         private string _cachedChromePath = "--";
         private string _cachedChromeVer = "--";
+        private string _browserType = "none";
+        private System.Windows.Controls.Button _btnDownloadChrome;
         private bool _isPackaged = false;
         private bool _autoStartOn = false;
         private string _shutdownInfo = "关";
@@ -172,36 +174,38 @@ namespace CastFlow.Manager
         {
             _isPackaged = File.Exists(System.IO.Path.Combine(_appRoot, "CastFlow.exe"));
 
-            // 查找 Chrome
-            try
+            // 查找 Chrome 和 Edge
+            string foundChrome = FindChromeExecutable();
+            string foundEdge = FindEdgeExecutable();
+
+            if (!string.IsNullOrEmpty(foundChrome) && File.Exists(foundChrome))
             {
-                string chromeReg = (string)Microsoft.Win32.Registry.GetValue(
-                    @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null);
-                if (string.IsNullOrEmpty(chromeReg) || !File.Exists(chromeReg))
+                _cachedChromePath = foundChrome;
+                try
                 {
-                    chromeReg = (string)Microsoft.Win32.Registry.GetValue(
-                        @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null);
+                    var vi = FileVersionInfo.GetVersionInfo(foundChrome);
+                    _cachedChromeVer = "Google Chrome v" + (vi.ProductVersion ?? vi.FileVersion ?? "已安装");
                 }
-
-                if (string.IsNullOrEmpty(chromeReg) || !File.Exists(chromeReg))
-                {
-                    string[] cands = new[]
-                    {
-                        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Google\Chrome\Application\chrome.exe"),
-                        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Google\Chrome\Application\chrome.exe"),
-                        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Google\Chrome\Application\chrome.exe")
-                    };
-                    foreach (var c in cands) { if (File.Exists(c)) { chromeReg = c; break; } }
-                }
-
-                if (!string.IsNullOrEmpty(chromeReg) && File.Exists(chromeReg))
-                {
-                    _cachedChromePath = chromeReg;
-                    var vi = FileVersionInfo.GetVersionInfo(chromeReg);
-                    _cachedChromeVer = vi.ProductVersion ?? vi.FileVersion ?? "已安装";
-                }
+                catch { _cachedChromeVer = "Google Chrome (已安装)"; }
+                _browserType = "chrome";
             }
-            catch { }
+            else if (!string.IsNullOrEmpty(foundEdge) && File.Exists(foundEdge))
+            {
+                _cachedChromePath = foundEdge;
+                try
+                {
+                    var vi = FileVersionInfo.GetVersionInfo(foundEdge);
+                    _cachedChromeVer = "Microsoft Edge v" + (vi.ProductVersion ?? vi.FileVersion ?? "已安装") + " (系统备选)";
+                }
+                catch { _cachedChromeVer = "Microsoft Edge (系统备选)"; }
+                _browserType = "edge";
+            }
+            else
+            {
+                _cachedChromePath = "未安装";
+                _cachedChromeVer = "未检测到 (需安装 Chrome)";
+                _browserType = "none";
+            }
 
             // 查找 Node
             if (_isPackaged)
@@ -394,9 +398,28 @@ namespace CastFlow.Manager
             Grid.SetColumn(_tagChrome, 1);
             rowBrowser.Children.Add(_tagChrome);
 
-            _txtChromeTabs = new TextBlock { Text = "0 个标签页", FontSize = 12, Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(130, 145, 165)), Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            Grid.SetColumn(_txtChromeTabs, 2);
-            rowBrowser.Children.Add(_txtChromeTabs);
+            var browserMeta = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+            _txtChromeTabs = new TextBlock { Text = "0 个标签页", FontSize = 12, Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(130, 145, 165)), VerticalAlignment = VerticalAlignment.Center };
+            browserMeta.Children.Add(_txtChromeTabs);
+
+            _btnDownloadChrome = new System.Windows.Controls.Button
+            {
+                Content = "下载 Chrome",
+                FontSize = 11,
+                Foreground = new SolidColorBrush(System.Windows.Media.Color.FromRgb(94, 159, 232)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 42, 60)),
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(7, 2, 7, 2),
+                Margin = new Thickness(10, 0, 0, 0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Visibility = Visibility.Collapsed
+            };
+            ApplyButtonCornerRadius(_btnDownloadChrome, 4);
+            _btnDownloadChrome.Click += (s, e) => OpenChromeDownloadPage();
+            browserMeta.Children.Add(_btnDownloadChrome);
+
+            Grid.SetColumn(browserMeta, 2);
+            rowBrowser.Children.Add(browserMeta);
             sp1.Children.Add(rowBrowser);
 
             // 访问地址行
@@ -901,18 +924,7 @@ namespace CastFlow.Manager
                 int sysUsed = ParseJsonInt(st, "sysUsedMb", 0);
                 int sysTotal = ParseJsonInt(st, "sysTotalMb", 0);
 
-                if (online)
-                {
-                    _tagChrome.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 134, 54));
-                    _txtChromeTag.Text = "[已连接]";
-                    _txtChromeTabs.Text = pageCount + " 个标签页";
-                }
-                else
-                {
-                    _tagChrome.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(110, 118, 129));
-                    _txtChromeTag.Text = "[未运行]";
-                    _txtChromeTabs.Text = "0 个标签页";
-                }
+                UpdateBrowserUiState(online, pageCount);
 
                 string heapStr = (heapMb > 0) ? heapMb + " MB" : "—";
                 string chromeStr = (chromeMb > 0) ? chromeMb + " MB" : "—";
@@ -943,9 +955,7 @@ namespace CastFlow.Manager
                 _txtServicePort.Text = "端口 " + _port;
                 _txtAccessUrl.Text = "http://" + GetBestLocalIpv4() + ":" + _port;
 
-                _tagChrome.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(110, 118, 129));
-                _txtChromeTag.Text = "[未运行]";
-                _txtChromeTabs.Text = "0 个标签页";
+                UpdateBrowserUiState(false, 0);
 
                 _txtMemoryInfo.Text = "页面 — / 阈值 400 MB · Chrome —";
                 _pbMemory.Value = 0;
@@ -989,7 +999,31 @@ namespace CastFlow.Manager
         // ================= 动作执行 =================
         private async Task ActionStartAsync()
         {
-            SetHint("正在拉起服务与大屏…");
+            if (_browserType == "none")
+            {
+                var res = System.Windows.MessageBox.Show(
+                    "系统中未检测到 Google Chrome 或 Edge 浏览器！\n\n" +
+                    "CastFlow 大屏展示依赖 Chrome 渲染大屏并进行远程控制。\n\n" +
+                    "是否立即前往 Google Chrome 官网下载并安装？",
+                    "未检测到大屏浏览器",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                if (res == MessageBoxResult.Yes)
+                {
+                    OpenChromeDownloadPage();
+                }
+                SetHint("请先安装 Google Chrome 后启动服务");
+                return;
+            }
+
+            if (_browserType == "edge")
+            {
+                SetHint("正在使用系统内置 Microsoft Edge 启动大屏…");
+            }
+            else
+            {
+                SetHint("正在拉起服务与大屏…");
+            }
             try
             {
                 string exe = System.IO.Path.Combine(_appRoot, "CastFlow.exe");
@@ -1451,6 +1485,103 @@ namespace CastFlow.Manager
             return fallback;
         }
 
+        private void UpdateBrowserUiState(bool online, int pageCount)
+        {
+            if (online)
+            {
+                _tagChrome.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 134, 54));
+                _txtChromeTag.Text = _browserType == "edge" ? "[Edge 已连接]" : "[已连接]";
+                _txtChromeTabs.Text = pageCount + " 个标签页";
+                if (_btnDownloadChrome != null) _btnDownloadChrome.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                if (_browserType == "chrome")
+                {
+                    _tagChrome.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(110, 118, 129));
+                    _txtChromeTag.Text = "[未运行]";
+                    _txtChromeTabs.Text = "0 个标签页";
+                    if (_btnDownloadChrome != null) _btnDownloadChrome.Visibility = Visibility.Collapsed;
+                }
+                else if (_browserType == "edge")
+                {
+                    _tagChrome.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(38, 128, 235));
+                    _txtChromeTag.Text = "[Edge 备选就绪]";
+                    _txtChromeTabs.Text = "将使用系统 Edge 渲染";
+                    if (_btnDownloadChrome != null) _btnDownloadChrome.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    _tagChrome.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(210, 105, 30));
+                    _txtChromeTag.Text = "[未检测到 Chrome]";
+                    _txtChromeTabs.Text = "未安装浏览器";
+                    if (_btnDownloadChrome != null) _btnDownloadChrome.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private string FindChromeExecutable()
+        {
+            try
+            {
+                string r = (string)Microsoft.Win32.Registry.GetValue(
+                    @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null);
+                if (string.IsNullOrEmpty(r) || !File.Exists(r))
+                {
+                    r = (string)Microsoft.Win32.Registry.GetValue(
+                        @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe", "", null);
+                }
+                if (!string.IsNullOrEmpty(r) && File.Exists(r)) return r;
+
+                string[] cands = new[]
+                {
+                    System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Google\Chrome\Application\chrome.exe"),
+                    System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Google\Chrome\Application\chrome.exe"),
+                    System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Google\Chrome\Application\chrome.exe")
+                };
+                foreach (var c in cands) { if (File.Exists(c)) return c; }
+            }
+            catch { }
+            return null;
+        }
+
+        private string FindEdgeExecutable()
+        {
+            try
+            {
+                string r = (string)Microsoft.Win32.Registry.GetValue(
+                    @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe", "", null);
+                if (string.IsNullOrEmpty(r) || !File.Exists(r))
+                {
+                    r = (string)Microsoft.Win32.Registry.GetValue(
+                        @"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe", "", null);
+                }
+                if (!string.IsNullOrEmpty(r) && File.Exists(r)) return r;
+
+                string[] cands = new[]
+                {
+                    System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Microsoft\Edge\Application\msedge.exe"),
+                    System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Microsoft\Edge\Application\msedge.exe"),
+                    System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Microsoft\Edge\Application\msedge.exe")
+                };
+                foreach (var c in cands) { if (File.Exists(c)) return c; }
+            }
+            catch { }
+            return null;
+        }
+
+        private void OpenChromeDownloadPage()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo("https://www.google.cn/chrome/") { UseShellExecute = true });
+            }
+            catch
+            {
+                try { Process.Start("https://www.google.cn/chrome/"); } catch { }
+            }
+        }
+
         private void KillChromeDebuggerProcess()
         {
             try
@@ -1461,7 +1592,7 @@ namespace CastFlow.Manager
 
             try
             {
-                string cmd = "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq 'chrome.exe' -and $_.CommandLine -match 'remote-debugging' } | ForEach-Object { taskkill /F /T /PID $_.ProcessId }";
+                string cmd = "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { ($_.Name -eq 'chrome.exe' -or $_.Name -eq 'msedge.exe') -and $_.CommandLine -match 'remote-debugging' } | ForEach-Object { taskkill /F /T /PID $_.ProcessId }";
                 var psi = new ProcessStartInfo("powershell", "-NoProfile -Command \"" + cmd + "\"")
                 {
                     CreateNoWindow = true,

@@ -149,12 +149,13 @@ async function ensureFullscreen(target, attempts = 5) {
     log(`Chrome 调试端口 ${cdpPort} 已在监听`);
     await ensureUrlViaCdp(config.target, startUrl);
   } else if (!chromePath) {
-    log('错误：找不到 Chrome，请检查 config.json 的 chromePath');
+    log('错误：未检测到 Chrome 或 Edge 浏览器，请先安装 Google Chrome');
   } else {
-    log(`启动 Chrome（CDP 端口 ${cdpPort}）`);
+    const isEdge = /msedge/i.test(chromePath);
+    log(`启动大屏浏览器（${isEdge ? 'Microsoft Edge 备选' : 'Google Chrome'}，CDP 端口 ${cdpPort}）`);
     chromeCtl.startChrome(chromePath, config, cdpPort);
     const ok = await waitPort(cdpPort, 30000);
-    log(ok ? 'Chrome 调试端口就绪' : '警告：等待 Chrome 调试端口超时，控制端可能暂时连不上');
+    log(ok ? '浏览器调试端口就绪' : '警告：等待浏览器调试端口超时，控制端可能暂时连不上');
   }
 
   // ---- 2. Node 控制服务 ----

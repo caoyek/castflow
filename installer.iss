@@ -14,7 +14,7 @@
 ;   7. 启动并打开设置页
 
 #define AppName "CastFlow"
-#define AppVersion "1.0.0"
+#define AppVersion "1.0.1"
 #define AppExe "CastFlow.exe"
 #define WebPort "18089"
 
@@ -97,7 +97,7 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Com
 Filename: "netsh"; Parameters: "advfirewall firewall delete rule name=""{#AppName} 控制台"""; Flags: runhidden; RunOnceId: "delrule"
 
 [Code]
-// 安装前检查 Chrome —— 这是唯一的前置依赖
+// 安装前检查 Chrome 与 Edge
 function ChromeFound(): Boolean;
 var
   Paths: array[0..2] of String;
@@ -111,16 +111,44 @@ begin
     if FileExists(Paths[I]) then Result := True;
 end;
 
+function EdgeFound(): Boolean;
+var
+  Paths: array[0..2] of String;
+  I: Integer;
+begin
+  Paths[0] := ExpandConstant('{pf32}\Microsoft\Edge\Application\msedge.exe');
+  Paths[1] := ExpandConstant('{pf}\Microsoft\Edge\Application\msedge.exe');
+  Paths[2] := ExpandConstant('{localappdata}\Microsoft\Edge\Application\msedge.exe');
+  Result := False;
+  for I := 0 to 2 do
+    if FileExists(Paths[I]) then Result := True;
+end;
+
 function InitializeSetup(): Boolean;
+var
+  ErrCode: Integer;
 begin
   Result := True;
   if not ChromeFound() then
   begin
-    if MsgBox('没有检测到 Google Chrome。' + #13#10 + #13#10 +
-              'CastFlow 需要 Chrome 才能把内容显示到大屏上，请先安装 Chrome。' + #13#10 + #13#10 +
-              '仍要继续安装吗？（装完再补装 Chrome 也可以）',
-              mbConfirmation, MB_YESNO) = IDNO then
-      Result := False;
+    if EdgeFound() then
+    begin
+      MsgBox('系统未检测到 Google Chrome，但已检测到 Microsoft Edge。' + #13#10 + #13#10 +
+             'CastFlow 将自动使用 Edge 作为备选大屏渲染引擎。' + #13#10 +
+             '安装完成后可直接正常使用；若需更佳大屏兼容性，也可随后安装 Google Chrome。',
+             mbInformation, MB_OK);
+    end
+    else
+    begin
+      if MsgBox('没有检测到 Google Chrome 或 Microsoft Edge 浏览器。' + #13#10 + #13#10 +
+                'CastFlow 大屏展示依赖 Chrome 渲染大屏并进行远程控制。' + #13#10 + #13#10 +
+                '是否立即前往 Google Chrome 官网下载安装？' + #13#10 +
+                '（点击“是”将打开官网下载，稍后仍可继续安装）',
+                mbConfirmation, MB_YESNO) = IDYES then
+      begin
+        ShellExec('open', 'https://www.google.cn/chrome/', '', '', SW_SHOWNORMAL, ewNoWait, ErrCode);
+      end;
+    end;
   end;
 end;
 
