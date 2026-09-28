@@ -1381,7 +1381,7 @@ function openForm({ title, fields, ok = '确定', onOk }) {
   });
 }
 
-/* ---------- 视图切换 ---------- */
+/* ---------- 视图切换与路由持久化 ---------- */
 const TITLES = {
   cast: '投放',
   schedule: '排期',
@@ -1392,14 +1392,42 @@ const TITLES = {
 };
 let currentDeviceName = '大屏设备';
 
-function showView(v) {
+function getInitialView() {
+  const hash = location.hash.replace(/^#\/?/, '').trim();
+  if (TITLES[hash]) return hash;
+  try {
+    const cached = localStorage.getItem('castflow_view');
+    if (cached && TITLES[cached]) return cached;
+  } catch {}
+  return 'cast';
+}
+
+function showView(v, updateHistory = true) {
+  if (!TITLES[v]) v = 'cast';
+
   for (const x of document.querySelectorAll('.view')) x.classList.toggle('active', x.id === 'view-' + v);
   for (const x of document.querySelectorAll('[data-view]')) x.classList.toggle('active', x.dataset.view === v);
   $('pageTitle').textContent = TITLES[v] || '控制台';
   $('pageSub').hidden = v !== 'cast';
   closeLibPop();
+
+  try {
+    localStorage.setItem('castflow_view', v);
+  } catch {}
+
+  if (updateHistory) {
+    if (location.hash !== '#' + v) {
+      if (history.replaceState) {
+        history.replaceState(null, '', '#' + v);
+      } else {
+        location.hash = v;
+      }
+    }
+  }
+
   if (v === 'cast') { refreshStatus(); refreshShot(); refreshTabs(); startShotTimer(); }
   else { stopShotTimer(); }
+
   if (v === 'library') refreshLibrary();
   else if (v === 'devices') refreshDevices();
   else if (v === 'schedule') refreshSchedule();
@@ -1409,6 +1437,11 @@ function showView(v) {
   }
   window.scrollTo({ top: 0 });
 }
+
+window.addEventListener('hashchange', () => {
+  const h = location.hash.replace(/^#\/?/, '').trim();
+  if (TITLES[h]) showView(h, false);
+});
 
 for (const b of document.querySelectorAll('[data-view]')) b.onclick = () => showView(b.dataset.view);
 
@@ -2758,13 +2791,12 @@ for (const [id, path, label] of [
   } catch { applyDeviceName('大屏设备'); }
 
   refreshStatus();
-  refreshShot();
-  refreshTabs();
   refreshProcState();
   refreshTopmost();
-  loadLibrary();
-  startShotTimer();
-  refreshSchedule();
+
+  // 根据当前 URL Hash 或上次访问偏好自动恢复视图（F5 刷新绝不跳回投放页）
+  const initialView = getInitialView();
+  showView(initialView, true);
 
   setInterval(refreshStatus, 5000);
   setInterval(refreshTabs, 10000);
