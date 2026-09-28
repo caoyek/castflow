@@ -16,7 +16,7 @@
   <a href="https://github.com/caoyek/castflow/pulls"><img src="https://img.shields.io/badge/PRs-Welcome-brightgreen.svg?style=for-the-badge" alt="PRs Welcome"></a>
 </p>
 
-[功能特性](#-核心特性) • [为什么选择 CastFlow](#-为什么选择-castflow) • [系统架构](#-系统架构) • [快速开始](#-快速开始) • [配置说明](#-配置说明) • [RESTful API](#-开放-api-接口) • [工程深度解析](#-工程深度解析)
+[功能特性](#-核心特性) • [为什么选择 CastFlow](#-为什么选择-castflow) • [系统架构](#-系统架构) • [快速开始](#-快速开始) • [配置说明](#-配置说明) • [RESTful API](#-开放-api-接口)
 
 </div>
 
@@ -272,23 +272,6 @@ CastFlow 提供轻量、纯粹的 HTTP RESTful API，方便第三方系统（如
 - `GET /api/media`：获取已上传的音视频和图片文件列表；
 - `POST /api/upload`：上传媒体文件（流式传输，Header 携带 `X-Filename`）；
 - `POST /api/media/delete`：删除指定媒体文件 `{"name": "promo.mp4"}`。
-
----
-
-## 🔬 工程深度解析
-
-### 1. 为什么不用 Puppeteer / Playwright / Electron？
-- **体积与资源**：Puppeteer 下载 Chromium 需 300MB+，运行时多层包装；CastFlow 原生实现轻量 CDP 通讯层，运行时内存占用 < 30MB。
-- **免二次安装**：直接借用商用大屏机上通常已安装的 Google Chrome，稳定且支持完整的硬件加速（DirectX/GPU）。
-
-### 2. 为什么开机自启不能使用 Windows 服务的 SYSTEM 账户？
-Windows 从 Vista 开始引入了**会话隔离（Session 0 Isolation）**。SYSTEM 服务运行在 Session 0 中，无法访问交互式桌面。如果用服务启动 Chrome，虽然后台有进程，但大屏将是一片黑屏。CastFlow 通过 Windows 计划任务的 `AtLogOn` 触发器，在用户交互式会话（Session 1）中启动，确保画面正常渲染在大屏上。
-
-### 3. 为什么关闭 Chrome 必须优先走 CDP 的 `Browser.close`？
-如果在关闭 Chrome 时直接使用 `taskkill /F /IM chrome.exe`，不仅会波及用户自身开着的 Chrome，而且 Chrome 的 Profile 文件会被标记为「崩溃」。下次启动时，Chrome 会在右上角弹出一个强制确认的「异常关闭，是否恢复页面？」弹窗，无人值守大屏系统将直接卡死。CastFlow 优先调用 CDP 的 `Browser.close` 协议，让 Chrome 正常写入退出状态，彻底杜绝弹窗。
-
-### 4. 为什么视频流必须支持 HTTP 206 Range？
-普通的 HTTP 200 文件流无法让浏览器进行 Seek（拖动进度条）。当大屏播放 4K 宣传片或几百兆的大视频时，必须实现带 `Accept-Ranges: bytes` 与 `Content-Range` 的 HTTP 206 分片响应，才能让 Chrome 的媒体播放器实现任意拖拽、毫秒级缓冲与循环流畅播放。
 
 ---
 
