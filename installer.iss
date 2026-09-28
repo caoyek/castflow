@@ -88,8 +88,9 @@ Filename: "{app}\{#AppExe}"; Parameters: "--autostart"; Flags: nowait runhidden 
 ; 卸载时收拾干净：停进程、删任务、删防火墙规则
 ; 先让服务通过 CDP 关掉它自己拉起的大屏 Chrome —— 不能用 taskkill /IM chrome.exe，
 ; 那会把用户自己开着的 Chrome 一起杀掉。
-Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""try{Invoke-RestMethod 'http://127.0.0.1:{#WebPort}/api/chrome/stop' -Method Post -TimeoutSec 25}catch{}"""; Flags: runhidden; RunOnceId: "stopchrome"
+Filename: "powershell.exe"; Parameters: "-NoProfile -Command ""Invoke-RestMethod 'http://127.0.0.1:{#WebPort}/api/chrome/stop' -Method Post -TimeoutSec 5 -ErrorAction SilentlyContinue"""; Flags: runhidden; RunOnceId: "stopchrome"
 Filename: "taskkill"; Parameters: "/F /IM {#AppExe}"; Flags: runhidden; RunOnceId: "killapp"
+Filename: "taskkill"; Parameters: "/F /IM CastFlowManager.exe"; Flags: runhidden; RunOnceId: "killmgr"
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Unregister-ScheduledTask -TaskName '{#AppName}' -Confirm:$false -ErrorAction SilentlyContinue"""; Flags: runhidden; RunOnceId: "deltask"
 ; 定时关机的任务也一起清掉（用户设过才会有）
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""Unregister-ScheduledTask -TaskName '{#AppName}Shutdown' -Confirm:$false -ErrorAction SilentlyContinue"""; Flags: runhidden; RunOnceId: "delofftask"
