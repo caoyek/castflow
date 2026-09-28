@@ -19,6 +19,7 @@ const DEFAULT_SCHEDULE = {
   rules: [
     {
       id: 'rule_default_1',
+      deviceId: 'default',
       name: '上午看板',
       timeStart: '09:00',
       timeEnd: '12:00',
@@ -28,6 +29,7 @@ const DEFAULT_SCHEDULE = {
     },
     {
       id: 'rule_default_2',
+      deviceId: 'default',
       name: '午间视频',
       timeStart: '12:00',
       timeEnd: '14:00',
@@ -37,6 +39,7 @@ const DEFAULT_SCHEDULE = {
     },
     {
       id: 'rule_default_3',
+      deviceId: 'default',
       name: '下午展播',
       timeStart: '14:00',
       timeEnd: '18:00',
@@ -58,9 +61,10 @@ function readJsonSafe(file) {
 function loadSchedule() {
   const data = readJsonSafe(P.SCHEDULE_FILE);
   if (data && typeof data === 'object') {
+    const rawRules = Array.isArray(data.rules) ? data.rules : [];
     return {
       enabled: !!data.enabled,
-      rules: Array.isArray(data.rules) ? data.rules : [],
+      rules: rawRules.map((r) => ({ ...r, deviceId: r.deviceId || 'default' })),
     };
   }
   // 初次启动或文件不存在时写出默认配置
@@ -72,13 +76,121 @@ function loadSchedule() {
   return JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
 }
 
-function saveSchedule(schedule) {
+// 将时间段拆解为一天内的 1 个或 2 个 [startMs, endMs] 闭区间（毫秒级，支持跨午夜）
+function getTimeIntervals(timeStart, timeEnd) {
+  const s = parseTimeToDayMs(timeStart);
+  const e = parseTimeToDayEndMs(timeEnd);
+  if (s <= e) {
+    return [[s, e]];
+  }
+  // 跨午夜：[s, 86399999] 和 [0, e]
+  return [
+    [s, 86399999],
+    [0, e],
+  ];
+}
+
+// 判断两个时间段在毫秒级闭区间上是否重叠
+function isTimeOverlap(startA, endA, startB, endB) {
+  if (!startA || !endA || !startB || !endB) return false;
+  if (startA === endA || startB === endB) return true; // 全天时段必定与其他时段重叠
+
+  const intervalsA = getTimeIntervals(startA, endA);
+  const intervalsB = getTimeIntervals(startB, endB);
+
+  for (const [sA, eA] of intervalsA) {
+    for (const [sB, eB] of intervalsB) {
+      if (Math.max(sA, sB) <= Math.min(eA, eB)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * 判断两条排期规则是否属于同一个设备范围（预留多设备支持）
+ * - 规则可以带有 deviceId 字段，如 'device_A', 'device_B', 'all' 等，未指定时默认为 'default'
+ * - 规则带有 deviceId 时：
+ *   1. 若任一规则为 'all'（代表作用于所有设备），则与任意设备均产生作用域交集
+ *   2. 若两个规则的 deviceId 相同，则属于同一设备
+ *   3. 若两个规则的 deviceId 不同且均不为 'all'，则属于不同设备，互不冲突，绝不拦截！
+ */
+function isSameDeviceScope(ruleA, ruleB) {
+  const devA = (ruleA && ruleA.deviceId ? String(ruleA.deviceId).trim() : 'default');
+  const devB = (ruleB && ruleB.deviceId ? String(ruleB.deviceId).trim() : 'default');
+  if (devA === 'all' || devB === 'all') return true;
+  return devA === devB;
+}
+
+/**
+ * 检查某条规则 targetRule 是否与已有规则列表 existingRules 中的某条规则产生冲突
+ * @param {Object} targetRule 待检查的新建/编辑规则
+ * @param {Array} existingRules 已有规则数组
+ * @returns {Object|null} 如果有冲突，返回发生冲突的那条规则对象；无冲突返回 null
+ */
+function findRuleConflict(targetRule, existingRules) {
+  if (!targetRule || !Array.isArray(existingRules)) return null;
+  if (targetRule.enabled === false) return null;
+
+  for (const other of existingRules) {
+    if (other.id && targetRule.id && other.id === targetRule.id) continue;
+    if (other.enabled === false) continue;
+    if (!isSameDeviceScope(targetRule, other)) continue;
+    if (isTimeOverlap(targetRule.timeStart, targetRule.timeEnd, other.timeStart, other.timeEnd)) {
+      return other;
+    }
+  }
+  return null;
+}
+
+/**
+ * 校验规则列表自身是否存在冲突（同一设备内启用的规则互相重叠）
+ */
+function validateScheduleRules(rules) {
+  if (!Array.isArray(rules)) return { valid: true };
+  for (let i = 0; i < rules.length; i++) {
+    const r1 = rules[i];
+    if (r1.enabled === false) continue;
+    for (let j = i + 1; j < rules.length; j++) {
+      const r2 = rules[j];
+      if (r2.enabled === false) continue;
+      if (!isSameDeviceScope(r1, r2)) continue;
+      if (isTimeOverlap(r1.timeStart, r1.timeEnd, r2.timeStart, r2.timeEnd)) {
+        const name1 = r1.name || '时段';
+        const name2 = r2.name || '时段';
+        return {
+          valid: false,
+          error: `时段冲突：【${name1} (${r1.timeStart}-${r1.timeEnd})】与【${name2} (${r2.timeStart}-${r2.timeEnd})】时间重叠`,
+          ruleA: r1,
+          ruleB: r2,
+        };
+      }
+    }
+  }
+  return { valid: true };
+}
+
+function saveSchedule(schedule, options = {}) {
+  const cleanRules = (Array.isArray(schedule.rules) ? schedule.rules : []).map((r) => ({
+    ...r,
+    deviceId: r.deviceId || 'default',
+  }));
+
+  // 如果不跳过冲突校验，则检查启用的规则之间是否有冲突
+  if (!options.skipValidation) {
+    const check = validateScheduleRules(cleanRules);
+    if (!check.valid) {
+      return { ok: false, error: check.error, ruleA: check.ruleA, ruleB: check.ruleB };
+    }
+  }
+
   const clean = {
     enabled: !!schedule.enabled,
-    rules: Array.isArray(schedule.rules) ? schedule.rules : [],
+    rules: cleanRules,
   };
   fs.writeFileSync(P.SCHEDULE_FILE, JSON.stringify(clean, null, 2), 'utf8');
-  return clean;
+  return { ok: true, schedule: clean };
 }
 
 // 计算某个时刻处于当天的绝对毫秒数: 0 ~ 86,399,999 ms
@@ -252,7 +364,7 @@ async function resumeSchedule(screen, publicBase) {
   const schedule = loadSchedule();
   if (!schedule.enabled) {
     schedule.enabled = true;
-    saveSchedule(schedule);
+    saveSchedule(schedule, { skipValidation: true });
   }
   isManualOverride = false;
   const now = new Date();
@@ -289,7 +401,7 @@ function getStatus() {
 async function toggleSchedule(enabled, screen, publicBase) {
   const schedule = loadSchedule();
   schedule.enabled = enabled !== undefined ? !!enabled : !schedule.enabled;
-  saveSchedule(schedule);
+  saveSchedule(schedule, { skipValidation: true });
   isManualOverride = false;
 
   if (schedule.enabled && screen) {
@@ -324,4 +436,9 @@ module.exports = {
   getDayMs,
   parseTimeToDayMs,
   parseTimeToDayEndMs,
+  getTimeIntervals,
+  isTimeOverlap,
+  isSameDeviceScope,
+  findRuleConflict,
+  validateScheduleRules,
 };

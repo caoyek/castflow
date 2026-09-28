@@ -542,8 +542,11 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/schedule' && req.method === 'POST') {
       const body = await readBody(req);
-      const saved = scheduleMgr.saveSchedule(body);
-      return json(res, 200, { ok: true, ...scheduleMgr.getStatus(), schedule: saved });
+      const result = scheduleMgr.saveSchedule(body);
+      if (!result.ok) {
+        return json(res, 400, { ok: false, error: result.error, ruleA: result.ruleA, ruleB: result.ruleB });
+      }
+      return json(res, 200, { ok: true, ...scheduleMgr.getStatus(), schedule: result.schedule });
     }
 
     if (pathname === '/api/schedule/toggle' && req.method === 'POST') {

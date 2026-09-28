@@ -2370,6 +2370,72 @@ function timeToMinutes(t) {
   return (parts[0] || 0) * 60 + (parts[1] || 0);
 }
 
+function parseTimeToDayMs(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return 0;
+  const parts = timeStr.trim().split(':').map(Number);
+  const h = parts[0] || 0;
+  const m = parts[1] || 0;
+  const s = parts.length > 2 ? (parts[2] || 0) : 0;
+  return ((h * 60 + m) * 60 + s) * 1000;
+}
+
+function parseTimeToDayEndMs(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return 86399999;
+  const parts = timeStr.trim().split(':').map(Number);
+  const h = parts[0] || 0;
+  const m = parts[1] || 0;
+  if (parts.length > 2) {
+    const s = parts[2] || 0;
+    return ((h * 60 + m) * 60 + s) * 1000 + 999;
+  }
+  return ((h * 60 + m) * 60 + 59) * 1000 + 999;
+}
+
+function getTimeIntervals(timeStart, timeEnd) {
+  const s = parseTimeToDayMs(timeStart);
+  const e = parseTimeToDayEndMs(timeEnd);
+  if (s <= e) return [[s, e]];
+  return [
+    [s, 86399999],
+    [0, e],
+  ];
+}
+
+function isTimeOverlap(startA, endA, startB, endB) {
+  if (!startA || !endA || !startB || !endB) return false;
+  if (startA === endA || startB === endB) return true;
+  const intervalsA = getTimeIntervals(startA, endA);
+  const intervalsB = getTimeIntervals(startB, endB);
+  for (const [sA, eA] of intervalsA) {
+    for (const [sB, eB] of intervalsB) {
+      if (Math.max(sA, sB) <= Math.min(eA, eB)) return true;
+    }
+  }
+  return false;
+}
+
+function isSameDeviceScope(ruleA, ruleB) {
+  const devA = (ruleA && ruleA.deviceId ? String(ruleA.deviceId).trim() : 'default');
+  const devB = (ruleB && ruleB.deviceId ? String(ruleB.deviceId).trim() : 'default');
+  if (devA === 'all' || devB === 'all') return true;
+  return devA === devB;
+}
+
+function findRuleConflict(targetRule, existingRules) {
+  if (!targetRule || !Array.isArray(existingRules)) return null;
+  if (targetRule.enabled === false) return null;
+
+  for (const other of existingRules) {
+    if (other.id && targetRule.id && other.id === targetRule.id) continue;
+    if (other.enabled === false) continue;
+    if (!isSameDeviceScope(targetRule, other)) continue;
+    if (isTimeOverlap(targetRule.timeStart, targetRule.timeEnd, other.timeStart, other.timeEnd)) {
+      return other;
+    }
+  }
+  return null;
+}
+
 function renderScheduleView(data) {
   const isEnabled = !!data.enabled;
   const rules = Array.isArray(data.rules) ? data.rules : [];
@@ -2523,11 +2589,30 @@ function renderScheduleCards(rules, activeId, isEnabled) {
     const toggleInput = card.querySelector('.rule-toggle');
     const toggleText = card.querySelector('.rule-toggle-text');
     toggleInput.onchange = async () => {
+      if (toggleInput.checked) {
+        // 开启前检查是否与已有规则产生时间冲突
+        const conflict = findRuleConflict({ ...rule, enabled: true }, currentSchedule.rules);
+        if (conflict) {
+          toggleInput.checked = false;
+          toggleLabel.classList.remove('active');
+          toggleText.textContent = '已停用';
+          card.classList.add('disabled');
+          toast(`无法启用：与【${conflict.name || '时段'} (${conflict.timeStart}-${conflict.timeEnd})】重叠冲突`, 'bad');
+          return;
+        }
+      }
       rule.enabled = toggleInput.checked;
       toggleLabel.classList.toggle('active', rule.enabled);
       toggleText.textContent = rule.enabled ? '已启用' : '已停用';
       card.classList.toggle('disabled', !rule.enabled);
-      await saveScheduleToServer();
+      const ok = await saveScheduleToServer();
+      if (!ok) {
+        rule.enabled = !toggleInput.checked;
+        toggleInput.checked = rule.enabled;
+        toggleLabel.classList.toggle('active', rule.enabled);
+        toggleText.textContent = rule.enabled ? '已启用' : '已停用';
+        card.classList.toggle('disabled', !rule.enabled);
+      }
     };
 
     card.querySelector('.rule-test').onclick = async () => {
@@ -2565,9 +2650,13 @@ async function saveScheduleToServer() {
     });
     if (res.ok) {
       renderScheduleView(res);
+      return true;
     }
+    toast(res.error || '保存排期失败', 'bad');
+    return false;
   } catch (err) {
     toast('保存排期失败: ' + err.message, 'bad');
+    return false;
   }
 }
 
@@ -2575,6 +2664,7 @@ async function openScheduleModal(editRule) {
   const isEdit = !!editRule;
   const r = editRule ? { ...editRule } : {
     id: 'rule_' + Date.now(),
+    deviceId: 'default',
     name: '',
     timeStart: '09:00',
     timeEnd: '12:00',
@@ -2582,6 +2672,7 @@ async function openScheduleModal(editRule) {
     target: '',
     enabled: true,
   };
+  r.deviceId = r.deviceId || 'default';
 
   let mediaList = [];
   let bookmarkList = [];
@@ -2719,11 +2810,30 @@ async function openScheduleModal(editRule) {
             return;
           }
 
-          r.timeStart = sTime;
-          r.timeEnd = eTime;
-          r.type = currentType;
-          r.target = targetVal;
-          r.name = wrap.querySelector('#schedFormName').value.trim();
+          const candidateRule = {
+            ...r,
+            deviceId: r.deviceId || 'default',
+            timeStart: sTime,
+            timeEnd: eTime,
+            type: currentType,
+            target: targetVal,
+            name: wrap.querySelector('#schedFormName').value.trim(),
+            enabled: r.enabled !== false,
+          };
+
+          // 保存前做时间冲突检测（同设备下启用的时段不能重叠）
+          const conflict = findRuleConflict(candidateRule, currentSchedule.rules);
+          if (conflict) {
+            toast(`时段冲突：与【${conflict.name || '已有排期'} (${conflict.timeStart}-${conflict.timeEnd})】重叠，请调整时段`, 'bad');
+            return;
+          }
+
+          r.deviceId = candidateRule.deviceId;
+          r.timeStart = candidateRule.timeStart;
+          r.timeEnd = candidateRule.timeEnd;
+          r.type = candidateRule.type;
+          r.target = candidateRule.target;
+          r.name = candidateRule.name;
 
           if (isEdit) {
             const idx = currentSchedule.rules.findIndex((x) => x.id === r.id);
@@ -2733,9 +2843,11 @@ async function openScheduleModal(editRule) {
             currentSchedule.rules.push(r);
           }
 
-          closeModal();
-          await saveScheduleToServer();
-          toast('时段已保存', 'ok');
+          const ok = await saveScheduleToServer();
+          if (ok) {
+            closeModal();
+            toast('时段已保存', 'ok');
+          }
         },
       },
     ],
