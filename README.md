@@ -7,6 +7,7 @@
 *Lightweight Big-Screen Kiosk & Digital Signage Controller powered by Chrome DevTools Protocol (CDP)*
 
 <p align="center">
+  <a href="https://github.com/caoyek/castflow/actions/workflows/build.yml"><img src="https://github.com/caoyek/castflow/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
   <a href="https://github.com/caoyek/castflow/stargazers"><img src="https://img.shields.io/github/stars/caoyek/castflow?style=for-the-badge&color=blue" alt="Stars"></a>
   <a href="https://github.com/caoyek/castflow/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License"></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-%3E%3D18.0-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"></a>
@@ -102,8 +103,8 @@ flowchart TD
 1. 从 [Releases](https://github.com/caoyek/castflow/releases) 页面下载最新版安装程序 `CastFlow-Setup-x.x.x.exe`。
 2. 双击安装（需要管理员权限以配置防火墙与系统防休眠策略）。
 3. 安装完成后，程序会自动拉起全屏大屏，并在浏览器中打开控制台：
-   - **本机访问**：`http://127.0.0.1:8080`
-   - **局域网访问**：`http://<大屏主机IP>:8080`（控制台右上角会自动显示当前局域网地址）
+   - **本机访问**：`http://127.0.0.1:18089`
+   - **局域网访问**：`http://<大屏主机IP>:18089`（控制台右上角会自动显示当前局域网地址）
 
 ### 方式二：从源码运行
 
@@ -171,6 +172,16 @@ iscc installer.iss
 - 自动配置 `powercfg` 彻底关闭显示器息屏与主机休眠；
 - 注册用户登录计划任务（避免 Windows Session 0 隔离导致黑屏）。
 
+### 3. GitHub Actions 云端一键在线编译（无需本地安装任何环境）
+
+本项目已完整配置 GitHub Actions 自动化 CI/CD 工作流：
+
+1. **手动一键触发**：在 GitHub 仓库页面点击 **Actions** -> 选择 **Build Windows Installer** -> 点击 **Run workflow**，GitHub 官方 Windows 虚拟机将自动执行 C# 编译、Node 打包、Inno Setup 安装包构建，并在几分钟内生成安装包供直接下载！
+2. **下载构建产物**：构建完成后，在构建详情页底部的 **Artifacts** 处可直接下载：
+   - `CastFlow-Windows-Installer`：标准一键安装包 `CastFlow-Setup-1.0.0.exe`
+   - `CastFlow-Portable-Zip`：免安装绿色便携版压缩包 `CastFlow-Portable.zip`
+3. **自动发布 Release**：当在仓库推送版本标签（例如 `git tag v1.0.0 && git push origin v1.0.0`）时，云端会自动生成 GitHub Release，并将安装包和绿色便携包挂载为公开下载附件。
+
 ---
 
 ## ⚙️ 配置说明
@@ -180,7 +191,7 @@ iscc installer.iss
 ```json
 {
   "target": "127.0.0.1:9222",
-  "port": 8080,
+  "port": 18089,
   "publicBase": "auto",
   "settleMs": 1500,
   "memoryLimitMb": 400,

@@ -1,0 +1,96 @@
+name: Build Windows Installer
+
+on:
+  workflow_dispatch: # 支持在 GitHub 网页手动点击触发
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*' # 推送以 v 开头的 tag 时自动触发打包并发布 Release
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Package Windows Installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install NPM Dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build CastFlow Manager (C# GUI)
+        shell: powershell
+        run: |
+          Write-Host "Compiling CastFlowManager.exe..."
+          powershell -ExecutionPolicy Bypass -File manager\build.ps1
+          Copy-Item manager\CastFlowManager.exe CastFlowManager.exe -Force
+          Write-Host "CastFlowManager.exe compiled successfully."
+
+      - name: Package CastFlow Runtime
+        shell: powershell
+        run: |
+          Write-Host "Running build.ps1 to package CastFlow runtime..."
+          powershell -ExecutionPolicy Bypass -File build.ps1
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: |
+          Write-Host "Installing Inno Setup via Chocolatey..."
+          choco install innosetup -y --no-progress
+
+      - name: Compile Installer with Inno Setup
+        shell: powershell
+        run: |
+          Write-Host "Compiling installer.iss..."
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\iscc.exe"
+          if (-not (Test-Path $iscc)) {
+            $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source
+          }
+          if (-not $iscc) {
+            throw "Inno Setup compiler (iscc.exe) not found!"
+          }
+          & $iscc installer.iss
+          Write-Host "Installer compiled successfully."
+
+      - name: Create Portable Zip Package
+        shell: powershell
+        run: |
+          Write-Host "Creating portable zip package..."
+          Compress-Archive -Path dist\CastFlow\* -DestinationPath dist\CastFlow-Portable.zip -Force
+          Write-Host "Portable package created at dist\CastFlow-Portable.zip"
+
+      - name: Upload Installer to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CastFlow-Windows-Installer
+          path: dist/*Setup*.exe
+          if-no-files-found: error
+
+      - name: Upload Portable Zip to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CastFlow-Portable-Zip
+          path: dist/CastFlow-Portable.zip
+          if-no-files-found: error
+
+      - name: Create GitHub Release (On Tag Push)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*Setup*.exe
+            dist/CastFlow-Portable.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
