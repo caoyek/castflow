@@ -345,8 +345,11 @@ const server = http.createServer(async (req, res) => {
       scheduleMgr.markManualOverride();
       const url = target.trim();
       const started = Date.now();
+      // mode=new 走左侧加号新建标签页：必定新开标签并切过去
       // mode=tab 走收藏夹那套：已开着就切过去，否则新开标签
-      if (mode === 'tab') await screen.openOrSwitch(url);
+      // mode 为空（大屏上方地址栏投放）：在当前活动标签页直接跳转
+      if (mode === 'new') await screen.openTab(url);
+      else if (mode === 'tab') await screen.openOrSwitch(url);
       else await screen.navigate(url);
       return json(res, 200, { ok: true, url, ms: Date.now() - started });
     }

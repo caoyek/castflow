@@ -193,20 +193,15 @@ class BigScreen {
     return { targetId, title: target.title, url: target.url };
   }
 
-  // 新开标签页并切过去。background 默认 false，新标签会直接到前台
+  // 新开标签页并切过去。新标签会直接激活并切到前台
   async openTab(url) {
     const conn = await this.#browserConn();
     const { targetId } = await conn.send('Target.createTarget', { url, newWindow: false });
+    await conn.send('Target.activateTarget', { targetId }).catch(() => {});
     await sleep(300); // 等它出现在 /json/list 里
 
-    // 接管新标签，后续投放/截图/缩放都打在它身上
-    this.page?.close();
-    this.page = null;
-    this.targetId = targetId;
-    await this.#pageConn();
-
-    if (this.zoom !== 1) await this.#stepTo(this.page, ZOOM_STEPS.indexOf(this.zoom));
-    return { targetId };
+    // 显式激活并切到该新标签页
+    return this.switchTab(targetId);
   }
 
   // 收藏夹点击用：已经开着就切过去（省一次加载），否则新开一个

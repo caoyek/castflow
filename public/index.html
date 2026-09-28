@@ -1004,6 +1004,10 @@ function applyDeviceName(name) {
 }
 
 /* ---------- 投放 ---------- */
+let addressDirty = false;
+let lastSyncedAddress = '';
+const addressInput = $('address');
+
 async function push(url, mode) {
   const run = async () => {
     try {
@@ -1012,7 +1016,12 @@ async function push(url, mode) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, mode }),
       });
-      toast((mode === 'tab' ? '已切换' : '已投放') + ' · ' + d.ms + ' ms', 'ok');
+      const tip = mode === 'new' ? '已在新建标签页打开' : (mode === 'tab' ? '已切换' : '已投放');
+      toast(tip + ' · ' + d.ms + ' ms', 'ok');
+      addressDirty = false;
+      const targetUrl = d.url || url;
+      addressInput.value = targetUrl;
+      lastSyncedAddress = targetUrl;
       refreshStatus();
       refreshTabs();
       setTimeout(refreshShot, 600);
@@ -1020,16 +1029,33 @@ async function push(url, mode) {
       toast('投放失败：' + err.message, 'bad');
     }
   };
-  if (mode === 'tab') await run();
+  if (mode === 'tab' || mode === 'new') await run();
   else await busy($('castBtn'), run);
 }
 
+addressInput.addEventListener('input', () => {
+  addressDirty = true;
+});
+addressInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    $('castBtn').click();
+  } else if (e.key === 'Escape') {
+    addressInput.value = lastSyncedAddress;
+    addressDirty = false;
+    addressInput.blur();
+  }
+});
+
 $('castBtn').onclick = () => {
-  const url = $('address').value.trim();
+  let url = addressInput.value.trim();
   if (!url) return toast('先填个网址', 'bad');
-  push(url);
+  if (!/^https?:\/\//i.test(url) && !url.startsWith('/') && !url.startsWith('about:')) {
+    url = 'https://' + url;
+  }
+  addressDirty = false;
+  push(url); // 当前标签页直接跳转
 };
-$('address').onkeydown = (e) => { if (e.key === 'Enter') $('castBtn').click(); };
+
 $('refreshBtn').onclick = () => busy($('refreshBtn'), async () => {
   toast('刷新中…');
   try { await api('/api/reload', { method: 'POST' }); toast('已刷新', 'ok'); refreshStatus(); setTimeout(refreshShot, 800); }
@@ -1104,7 +1130,13 @@ async function refreshStatus() {
 
   $('nowText').textContent = on ? (d.url || '—') : (d.error || '—');
   $('nowText').title = on ? (d.url || '') : '';
-  if (on && d.url) $('address').value = d.url;
+  if (on && d.url) {
+    lastSyncedAddress = d.url;
+    const isFocused = document.activeElement === addressInput;
+    if (!isFocused && !addressDirty) {
+      addressInput.value = d.url;
+    }
+  }
 
   if ($('devRowMem')) {
     $('devRowMem').textContent = on && d.heapMb != null ? d.heapMb + ' / ' + d.memoryLimitMb + ' MB' : '— / — MB';
@@ -1316,6 +1348,11 @@ async function switchTab(id) {
   try {
     const d = await api('/api/tab', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetId: id }) });
     toast('已切换 · ' + (d.title || d.url), 'ok');
+    addressDirty = false;
+    if (d.url) {
+      addressInput.value = d.url;
+      lastSyncedAddress = d.url;
+    }
     refreshTabs(); refreshStatus();
     setTimeout(refreshShot, 500);
   } catch (err) { toast('切换失败：' + err.message, 'bad'); }
@@ -1510,7 +1547,7 @@ function renderLibPop() {
     copy.append(b, s);
 
     row.append(thumb, copy);
-    row.onclick = () => { closeLibPop(); push(it.url, it.isBookmark ? 'tab' : undefined); };
+    row.onclick = () => { closeLibPop(); push(it.url, 'new'); };
     box.appendChild(row);
   }
 }
@@ -1522,7 +1559,8 @@ $('libPopGo').onclick = () => {
   if (!u) return toast('先填个网址', 'bad');
   if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
   closeLibPop();
-  push(u);
+  $('libPopUrl').value = '';
+  push(u, 'new');
 };
 $('libPopUrl').onkeydown = (e) => { if (e.key === 'Enter') $('libPopGo').click(); };
 $('libPopUpload').onclick = () => { closeLibPop(); pick(); };
