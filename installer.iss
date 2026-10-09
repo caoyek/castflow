@@ -11,7 +11,7 @@
 ;   4. 注册计划任务    —— 登录时启动，必须是交互式身份（SYSTEM 在会话 0 里看不到桌面）
 ;   5. 关睡眠          —— 不关的话大屏会自己黑掉，用户会当成故障
 ;   6. 桌面快捷方式    —— 两个：打开控制台 / 重启服务
-;   7. 启动并打开设置页
+;   7. 完成页可选：启动大屏服务 / 打开桌面控制台（安装前会先停掉运行中的旧版本）
 
 #define AppName "CastFlow"
 #define AppVersion "1.0.4"
@@ -81,8 +81,9 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Com
 ; 开机自启：静默拉起 CastFlow.exe --autostart（自动带出 Chrome 大屏并运行后台控制服务）
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$a=New-ScheduledTaskAction -Execute '{app}\{#AppExe}' -Argument '--autostart' -WorkingDirectory '{app}'; $t=New-ScheduledTaskTrigger -AtLogOn; Register-ScheduledTask -TaskName '{#AppName}' -Action $a -Trigger $t -Force | Out-Null"""; Flags: runhidden; Tasks: autostart
 
-; ---- 启动 ----
-Filename: "{app}\{#AppExe}"; Parameters: "--autostart"; Flags: nowait runhidden postinstall skipifsilent; StatusMsg: "启动服务…"
+; ---- 启动（安装完成页的勾选项，点「完成」后才执行）----
+Filename: "{app}\{#AppExe}"; Parameters: "--autostart"; WorkingDir: "{app}"; Description: "启动大屏服务"; Flags: nowait runhidden postinstall skipifsilent
+Filename: "{app}\CastFlowManager.exe"; WorkingDir: "{app}"; Description: "打开 CastFlow 控制台"; Flags: nowait postinstall skipifsilent
 
 ; ---- 在线更新（管理器以 /SILENT /CFUPDATE=1 调起）：装完自动重启 ----
 ; 必须 runasoriginaluser：安装器是管理员权限，直接拉起会让服务和大屏 Chrome 也跑在提权身份下
@@ -115,24 +116,42 @@ begin
   Result := IsSilentUpdate() and (ExpandConstant('{param:CFSTARTSERVICE|1}') = '1');
 end;
 
-// 安装前等管理器自己优雅退出（它会先停服务和大屏 Chrome），超时再强杀兜底，避免文件被占用
+// 停掉正在运行的服务、控制台和大屏 Chrome，否则 CastFlow.exe / CastFlowManager.exe 被占用无法覆盖
+procedure StopRunningApp();
+var
+  ResultCode: Integer;
+begin
+  // 先让服务通过 CDP 关掉它自己拉起的大屏 Chrome（不能 taskkill chrome.exe，会误杀用户自己的 Chrome）
+  // 服务没运行时连接会被立即拒绝，不会拖慢全新安装
+  Exec('powershell.exe',
+       '-NoProfile -Command "try { Invoke-RestMethod ''http://127.0.0.1:{#WebPort}/api/chrome/stop'' -Method Post -TimeoutSec 3 | Out-Null } catch {}"',
+       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM CastFlowManager.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /T /IM {#AppExe}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // 等进程彻底退出、文件句柄释放
+  Sleep(1000);
+end;
+
+// 安装 / 升级开始前执行（在检测文件占用之前），返回空字符串表示继续安装
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
-  I, ResultCode: Integer;
+  I: Integer;
 begin
   Result := '';
-  if not IsSilentUpdate() then Exit;
 
-  I := 0;
-  while CheckForMutexes('CastFlowManager_SingleInstance_Mutex_Global') and (I < 40) do
+  // 在线更新：先给管理器最多 20 秒自己优雅退出（它会先停服务和大屏 Chrome）
+  if IsSilentUpdate() then
   begin
-    Sleep(500);
-    I := I + 1;
+    I := 0;
+    while CheckForMutexes('CastFlowManager_SingleInstance_Mutex_Global') and (I < 40) do
+    begin
+      Sleep(500);
+      I := I + 1;
+    end;
   end;
 
-  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM CastFlowManager.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM {#AppExe}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  Sleep(1000);
+  // 手动安装和在线更新都兜底停一次，避免“服务没停就装不上”
+  StopRunningApp();
 end;
 
 // 安装前检查 Chrome 与 Edge
@@ -192,15 +211,5 @@ begin
   end;
 end;
 
-procedure CurStepChanged(CurStep: TSetupStep);
-var
-  ErrCode: Integer;
-begin
-  // 装完自动打开本机设置页 —— 用户不需要知道本机 IP，走 localhost 就行
-  // 静默安装（含在线更新）时不打开，避免在大屏上弹出浏览器窗口
-  if (CurStep = ssPostInstall) and not WizardSilent() then
-  begin
-    Sleep(2500);  // 等服务起来
-    ShellExec('open', 'http://127.0.0.1:{#WebPort}/', '', '', SW_SHOWNORMAL, ewNoWait, ErrCode);
-  end;
-end;
+// 注：不再在安装结束时自动打开 http://127.0.0.1 网页。ssPostInstall 早于完成页的「启动大屏服务」，
+// 那时服务还没起来，页面必然打不开；改为由完成页勾选「打开 CastFlow 控制台」。
