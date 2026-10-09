@@ -177,6 +177,24 @@ function saveSchedule(schedule, options = {}) {
     deviceId: r.deviceId || 'default',
   }));
 
+  // 轮播规则：规范化播放列表与切换模式
+  for (const r of cleanRules) {
+    if (r.type !== 'carousel') continue;
+    r.items = (Array.isArray(r.items) ? r.items : [])
+      .map((it) => ({
+        type: it && it.type,
+        target: String((it && it.target) || '').trim(),
+        name: String((it && it.name) || '').trim(),
+        durationSec: Math.max(CAROUSEL_MIN_SEC, Math.round(Number(it && it.durationSec) || CAROUSEL_DEFAULT_SEC)),
+      }))
+      .filter((it) => CAROUSEL_TYPES.includes(it.type) && it.target);
+    r.switchMode = r.switchMode === 'navigate' ? 'navigate' : 'tab';
+    r.target = '';
+    if (!options.skipValidation && r.enabled !== false && !r.items.length) {
+      return { ok: false, error: `轮播时段【${r.name || `${r.timeStart}-${r.timeEnd}`}】至少需要添加一个有效页面` };
+    }
+  }
+
   // 如果不跳过冲突校验，则检查启用的规则之间是否有冲突
   if (!options.skipValidation) {
     const check = validateScheduleRules(cleanRules);
@@ -312,11 +330,86 @@ function resolveRuleUrl(rule, publicBase) {
 // 调度器状态管理
 let currentActiveRuleId = null;
 let isManualOverride = false; // 是否处于用户手动临时投屏打断状态
+let currentCarouselKey = null; // 当前轮播位置：`${ruleId}#${index}`
+let tickBusy = false;          // 切换可能耗时超过 1 秒（等页面加载），防止心跳重入
+const carouselTabs = new Map(); // 标签页模式：`${ruleId}|${url}` → 常驻标签页 targetId
 
-async function executeRule(rule, screen, publicBase) {
+// ---- 轮播（carousel）----
+const CAROUSEL_TYPES = ['web', 'image', 'video'];
+const CAROUSEL_MIN_SEC = 5;
+const CAROUSEL_DEFAULT_SEC = 300;
+
+function getCarouselItems(rule) {
+  if (!rule || rule.type !== 'carousel' || !Array.isArray(rule.items)) return [];
+  return rule.items.filter((it) => it && CAROUSEL_TYPES.includes(it.type) && String(it.target || '').trim());
+}
+
+function itemDurationMs(item) {
+  const sec = Math.max(CAROUSEL_MIN_SEC, Number(item.durationSec) || CAROUSEL_DEFAULT_SEC);
+  return sec * 1000;
+}
+
+// 按时钟推算轮播位置：由「距时段起点的时长」直接算出当前页，
+// 不依赖计数器，服务重启或 Chrome 被拉起后也能回到此刻本该显示的那一页
+function getCarouselPosition(rule, now = new Date()) {
+  const items = getCarouselItems(rule);
+  if (!items.length) return null;
+  const nowMs = typeof now === 'number' ? now : getDayMs(now);
+  const startMs = parseTimeToDayMs(rule.timeStart);
+  const elapsed = (nowMs - startMs + 86400000) % 86400000; // 跨午夜时段同样成立
+  const durations = items.map(itemDurationMs);
+  const cycle = durations.reduce((a, b) => a + b, 0);
+  let t = elapsed % cycle;
+  for (let i = 0; i < items.length; i++) {
+    if (t < durations[i]) {
+      return { index: i, item: items[i], total: items.length, remainMs: durations[i] - t };
+    }
+    t -= durations[i];
+  }
+  return { index: 0, item: items[0], total: items.length, remainMs: durations[0] };
+}
+
+// 显示轮播中的某一页
+// - tab 模式：每页常驻一个标签页，切换只是提到前台，无白屏、看板数据保持实时
+// - navigate 模式：同一标签页内重新加载，省内存但每次切换都要重新渲染
+async function showCarouselItem(rule, pos, screen, publicBase) {
+  const url = resolveRuleUrl(pos.item, publicBase);
+  if (rule.switchMode === 'navigate') {
+    await screen.navigate(url);
+    return;
+  }
+  const key = `${rule.id}|${url}`;
+  const tabId = carouselTabs.get(key);
+  if (tabId) {
+    try {
+      await screen.switchTab(tabId);
+      return;
+    } catch {
+      carouselTabs.delete(key); // 标签页被关或 Chrome 重启过，重新打开
+    }
+  }
+  const r = await screen.openOrSwitch(url);
+  if (r && r.targetId) carouselTabs.set(key, r.targetId);
+}
+
+async function executeRule(rule, screen, publicBase, now = new Date()) {
   if (!rule || !screen) return;
-  const url = resolveRuleUrl(rule, publicBase);
   try {
+    if (rule.type === 'carousel') {
+      const pos = getCarouselPosition(rule, now);
+      if (!pos) {
+        currentCarouselKey = null;
+        await screen.navigate('about:blank');
+        return;
+      }
+      // 先记位置再切：切换失败时不会每秒重试刷屏，等下一页到点再切
+      currentCarouselKey = `${rule.id}#${pos.index}`;
+      await showCarouselItem(rule, pos, screen, publicBase);
+      console.log(`[排期调度] 轮播 ${rule.timeStart}-${rule.timeEnd} 第 ${pos.index + 1}/${pos.total} 页: ${pos.item.name || pos.item.target}`);
+      return;
+    }
+
+    const url = resolveRuleUrl(rule, publicBase);
     if (rule.type === 'web' && url !== 'about:blank') {
       await screen.openOrSwitch(url);
     } else {
@@ -330,27 +423,45 @@ async function executeRule(rule, screen, publicBase) {
 
 // 供定时心跳调用的单次检查
 async function checkScheduleTick(screen, publicBase, chromeOnline) {
-  if (!chromeOnline) return;
-  const schedule = loadSchedule();
-  if (!schedule.enabled) {
-    currentActiveRuleId = null;
-    return;
-  }
+  if (!chromeOnline || tickBusy) return;
+  tickBusy = true;
+  try {
+    const schedule = loadSchedule();
+    if (!schedule.enabled) {
+      currentActiveRuleId = null;
+      currentCarouselKey = null;
+      return;
+    }
 
-  const now = new Date();
-  const matchedRule = getActiveRule(schedule, now);
+    const now = new Date();
+    const matchedRule = getActiveRule(schedule, now);
 
-  // 如果没有匹配到任何时段
-  if (!matchedRule) {
-    currentActiveRuleId = null;
-    return;
-  }
+    // 如果没有匹配到任何时段
+    if (!matchedRule) {
+      currentActiveRuleId = null;
+      currentCarouselKey = null;
+      return;
+    }
 
-  // 如果命中规则发生了变化（即跨过了时段边界，毫秒级无缝衔接）
-  if (matchedRule.id !== currentActiveRuleId) {
-    currentActiveRuleId = matchedRule.id;
-    isManualOverride = false;
-    await executeRule(matchedRule, screen, publicBase);
+    // 如果命中规则发生了变化（即跨过了时段边界，毫秒级无缝衔接）
+    if (matchedRule.id !== currentActiveRuleId) {
+      currentActiveRuleId = matchedRule.id;
+      currentCarouselKey = null;
+      isManualOverride = false;
+      await executeRule(matchedRule, screen, publicBase, now);
+      return;
+    }
+
+    // 同一时段内：轮播到点切到下一页（手动插播期间暂停，点「恢复排期」后继续）
+    if (matchedRule.type === 'carousel' && !isManualOverride) {
+      const pos = getCarouselPosition(matchedRule, now);
+      const key = pos ? `${matchedRule.id}#${pos.index}` : null;
+      if (key && key !== currentCarouselKey) {
+        await executeRule(matchedRule, screen, publicBase, now);
+      }
+    }
+  } finally {
+    tickBusy = false;
   }
 }
 
@@ -388,12 +499,21 @@ function getStatus() {
   const schedule = loadSchedule();
   const now = new Date();
   const activeRule = getActiveRule(schedule, now);
+  const pos = activeRule && activeRule.type === 'carousel' ? getCarouselPosition(activeRule, now) : null;
   return {
     enabled: schedule.enabled,
     rules: schedule.rules,
     nowTime: getCurrentTimeStr(),
     activeRuleId: activeRule ? activeRule.id : null,
     isManualOverride,
+    carousel: pos
+      ? {
+          index: pos.index,
+          total: pos.total,
+          name: pos.item.name || pos.item.target,
+          remainSec: Math.ceil(pos.remainMs / 1000),
+        }
+      : null,
   };
 }
 
@@ -441,4 +561,5 @@ module.exports = {
   isSameDeviceScope,
   findRuleConflict,
   validateScheduleRules,
+  getCarouselPosition,
 };
