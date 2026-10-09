@@ -117,6 +117,7 @@ namespace CastFlow.Manager
         private bool _autoStartOn = false;
         private string _shutdownInfo = "关";
         private int _currentServerPid = 0;
+        private bool _serviceOnline = false;
 
         // 在线更新状态
         private const string CURRENT_VERSION = "v1.0.4";
@@ -130,6 +131,8 @@ namespace CastFlow.Manager
         public MainWindow()
         {
             _appRoot = AppDomain.CurrentDomain.BaseDirectory;
+            // 显式启用 TLS 1.2（3072），否则部分系统上 .NET Framework 默认协议无法访问 GitHub
+            try { ServicePointManager.SecurityProtocol |= (SecurityProtocolType)3072; } catch { }
             _port = ResolveConfigPort();
             _startUrl = ResolveConfigStartUrl();
             _http = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
@@ -964,6 +967,7 @@ namespace CastFlow.Manager
 
         private void ApplyState(string st, string local)
         {
+            _serviceOnline = st != null;
             if (st != null)
             {
                 // 服务在线
@@ -1787,6 +1791,12 @@ namespace CastFlow.Manager
             return null;
         }
 
+        // 校验类异常：与网络下载失败区分开，单独提示且不引导继续安装
+        private class UpdateVerifyException : Exception
+        {
+            public UpdateVerifyException(string message) : base(message) { }
+        }
+
         private async void OnUpdateClicked()
         {
             if (_isDownloadingUpdate) return;
@@ -1794,8 +1804,8 @@ namespace CastFlow.Manager
 
             var confirm = System.Windows.MessageBox.Show(
                 "检测到 CastFlow 最新版本 " + _latestVersionTag + "！\n\n" +
-                "点击【是】将立即在后台自动下载安装程序并执行覆盖升级。\n" +
-                "(升级时您的资料库、收藏页面、起始页和端口配置均会完好保留)\n\n" +
+                "点击【是】将自动下载安装包，SHA256 校验通过后静默升级，完成后自动重启服务与控制台。\n" +
+                "升级过程中大屏会短暂黑屏（约 1 分钟），资料库、收藏页面、起始页和端口配置均会完好保留。\n\n" +
                 "是否立即开始升级？",
                 "在线更新",
                 MessageBoxButton.YesNo,
@@ -1804,18 +1814,20 @@ namespace CastFlow.Manager
             if (confirm != MessageBoxResult.Yes) return;
 
             _isDownloadingUpdate = true;
+            string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "CastFlow-Setup-" + _latestVersionTag + ".exe");
 
             try
             {
                 _txtUpdateIcon.Text = "⬇ 准备中...";
+                SetHint("正在获取 " + _latestVersionTag + " 的校验信息…");
+
+                // 1. 先取校验值：拿不到就不下载，避免白白下载一个无法验证的安装包
+                string installerName = GetFileNameFromUrl(_installerDownloadUrl);
+                string expectedHash = await FetchExpectedSha256Async(_latestVersionTag, installerName);
+
+                // 2. 下载安装包
+                TryDeleteFile(tempFile);
                 SetHint("正在下载最新安装包 " + _latestVersionTag + "…");
-
-                string tempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "CastFlow-Setup-" + _latestVersionTag + ".exe");
-                if (File.Exists(tempFile))
-                {
-                    try { File.Delete(tempFile); } catch { }
-                }
-
                 using (var wc = new System.Net.WebClient())
                 {
                     wc.Headers.Add("User-Agent", "CastFlowManager/" + CURRENT_VERSION);
@@ -1831,25 +1843,70 @@ namespace CastFlow.Manager
                     await wc.DownloadFileTaskAsync(new Uri(_installerDownloadUrl), tempFile);
                 }
 
-                if (File.Exists(tempFile) && new FileInfo(tempFile).Length > 1024 * 1024)
+                // 3. SHA256 校验：不一致直接删除，绝不执行
+                _txtUpdateIcon.Text = "⬇ 校验中...";
+                SetHint("下载完成，正在校验安装包 SHA256…");
+                string actualHash = await Task.Run(() => ComputeFileSha256(tempFile));
+                if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
                 {
-                    _txtUpdateIcon.Text = "✔ 启动安装向导";
-                    SetHint("下载完成，正在启动安装程序…");
-
-                    // 启动安装程序（管理员提权执行）
-                    Process.Start(new ProcessStartInfo(tempFile) { UseShellExecute = true });
-
-                    // 延迟 1 秒后优雅安全退出当前控制台，释放文件锁，允许安装向导执行文件覆盖
-                    await Task.Delay(1000);
-                    await SafeExitAsync();
+                    TryDeleteFile(tempFile);
+                    throw new UpdateVerifyException(
+                        "安装包 SHA256 校验不一致，文件可能下载不完整或被篡改，已删除。\n\n" +
+                        "期望值：" + expectedHash + "\n" +
+                        "实际值：" + actualHash);
                 }
-                else
+
+                // 4. 静默安装：安装器会等待本程序退出，装完后以当前用户身份重启服务与控制台
+                string logFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "CastFlow-Update.log");
+                string args = "/SILENT /SUPPRESSMSGBOXES /NORESTART /CFUPDATE=1" +
+                              " /CFSTARTSERVICE=" + (_serviceOnline ? "1" : "0") +
+                              " /LOG=\"" + logFile + "\"";
+
+                _txtUpdateIcon.Text = "✔ 正在升级";
+                SetHint("校验通过，正在静默安装新版本，完成后将自动重启…");
+
+                try
                 {
-                    throw new Exception("下载文件校验失败或文件不完整");
+                    Process.Start(new ProcessStartInfo(tempFile, args) { UseShellExecute = true });
+                }
+                catch (System.ComponentModel.Win32Exception wex)
+                {
+                    // 1223 = 用户在 UAC 提权窗口点了“否”
+                    if (wex.NativeErrorCode == 1223)
+                    {
+                        _isDownloadingUpdate = false;
+                        _txtUpdateIcon.Text = "⬇ 新版 " + _latestVersionTag;
+                        SetHint("已取消升级（未授予管理员权限），服务保持原样运行");
+                        return;
+                    }
+                    throw;
+                }
+
+                // 延迟 1 秒后安全退出：停掉服务与大屏 Chrome、释放文件锁，让安装器覆盖文件
+                await Task.Delay(1000);
+                await SafeExitAsync();
+            }
+            catch (UpdateVerifyException vex)
+            {
+                _isDownloadingUpdate = false;
+                _txtUpdateIcon.Text = "⬇ 重试更新";
+                SetHint("更新校验失败，已取消升级");
+
+                var res = System.Windows.MessageBox.Show(
+                    vex.Message + "\n\n" +
+                    "为安全起见已取消自动升级，当前版本不受影响。\n" +
+                    "是否在系统浏览器中打开 Release 页面手动下载？",
+                    "更新校验失败",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Error);
+                if (res == MessageBoxResult.Yes)
+                {
+                    try { Process.Start(new ProcessStartInfo("https://github.com/caoyek/castflow/releases/latest") { UseShellExecute = true }); } catch { }
                 }
             }
             catch (Exception ex)
             {
+                TryDeleteFile(tempFile);
                 _isDownloadingUpdate = false;
                 _txtUpdateIcon.Text = "⬇ 重试更新";
                 SetHint("更新包下载失败: " + ex.Message);
@@ -1866,6 +1923,67 @@ namespace CastFlow.Manager
                     try { Process.Start(new ProcessStartInfo("https://github.com/caoyek/castflow/releases/latest") { UseShellExecute = true }); } catch { }
                 }
             }
+        }
+
+        // 从 Release 附带的 SHA256SUMS.txt 中查出指定文件的期望哈希
+        private async Task<string> FetchExpectedSha256Async(string tag, string fileName)
+        {
+            string url = "https://github.com/caoyek/castflow/releases/download/" + tag + "/SHA256SUMS.txt";
+            string text;
+            using (var client = new HttpClient())
+            {
+                client.Timeout = TimeSpan.FromSeconds(15);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("CastFlowManager/" + CURRENT_VERSION);
+                var resp = await client.GetAsync(url);
+                if (resp.StatusCode == HttpStatusCode.NotFound)
+                {
+                    throw new UpdateVerifyException("新版本 " + tag + " 未提供 SHA256 校验文件（SHA256SUMS.txt）。");
+                }
+                resp.EnsureSuccessStatusCode();
+                text = await resp.Content.ReadAsStringAsync();
+            }
+
+            // 每行格式：<64 位哈希><空白><文件名>，兼容 sha256sum 二进制模式的 * 前缀
+            foreach (string raw in text.Split('\n'))
+            {
+                string line = raw.Trim().TrimStart('\uFEFF');
+                if (line.Length == 0 || line.StartsWith("#")) continue;
+                int sep = line.IndexOfAny(new[] { ' ', '\t' });
+                if (sep <= 0) continue;
+                string hash = line.Substring(0, sep);
+                string name = line.Substring(sep).Trim().TrimStart('*');
+                if (hash.Length == 64 && string.Equals(name, fileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return hash.ToLowerInvariant();
+                }
+            }
+            throw new UpdateVerifyException("校验文件中未找到 " + fileName + " 的 SHA256 值。");
+        }
+
+        private static string ComputeFileSha256(string path)
+        {
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            using (var fs = File.OpenRead(path))
+            {
+                byte[] bytes = sha.ComputeHash(fs);
+                var sb = new StringBuilder(64);
+                foreach (byte b in bytes) sb.Append(b.ToString("x2"));
+                return sb.ToString();
+            }
+        }
+
+        private static string GetFileNameFromUrl(string url)
+        {
+            return Uri.UnescapeDataString(System.IO.Path.GetFileName(new Uri(url).AbsolutePath));
+        }
+
+        private static void TryDeleteFile(string path)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(path) && File.Exists(path)) File.Delete(path);
+            }
+            catch { }
         }
     }
 }

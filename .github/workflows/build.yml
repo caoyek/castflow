@@ -83,11 +83,23 @@ jobs:
           Compress-Archive -Path dist\CastFlow\* -DestinationPath dist\CastFlow-Portable.zip -Force
           Write-Host "Portable package created at dist\CastFlow-Portable.zip"
 
+      # 生成 sha256sum 格式的校验文件，管理器在线更新时据此校验安装包
+      - name: Generate SHA256 Checksums
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem dist -File | Where-Object { $_.Name -like '*Setup*.exe' -or $_.Name -eq 'CastFlow-Portable.zip' })
+          if ($files.Count -lt 2) { throw "未找到完整的安装包与便携包，无法生成校验文件" }
+          $lines = $files | Sort-Object Name | ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name }
+          [IO.File]::WriteAllText((Join-Path $PWD 'dist/SHA256SUMS.txt'), ($lines -join "`n") + "`n", [Text.UTF8Encoding]::new($false))
+          Get-Content dist/SHA256SUMS.txt
+
       - name: Upload Installer to GitHub Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: CastFlow-Windows-Installer
-          path: dist/*Setup*.exe
+          path: |
+            dist/*Setup*.exe
+            dist/SHA256SUMS.txt
           if-no-files-found: error
 
       - name: Upload Portable Zip to GitHub Artifacts
@@ -106,6 +118,7 @@ jobs:
           files: |
             dist/*Setup*.exe
             dist/CastFlow-Portable.zip
+            dist/SHA256SUMS.txt
           generate_release_notes: true # 在 CHANGELOG 说明后追加自动生成的版本对比链接
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

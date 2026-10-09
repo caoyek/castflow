@@ -84,6 +84,11 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Com
 ; ---- 启动 ----
 Filename: "{app}\{#AppExe}"; Parameters: "--autostart"; Flags: nowait runhidden postinstall skipifsilent; StatusMsg: "启动服务…"
 
+; ---- 在线更新（管理器以 /SILENT /CFUPDATE=1 调起）：装完自动重启 ----
+; 必须 runasoriginaluser：安装器是管理员权限，直接拉起会让服务和大屏 Chrome 也跑在提权身份下
+Filename: "{app}\{#AppExe}"; Parameters: "--autostart"; WorkingDir: "{app}"; Flags: nowait runhidden runasoriginaluser; Check: IsUpdateStartService; StatusMsg: "重启服务…"
+Filename: "{app}\CastFlowManager.exe"; WorkingDir: "{app}"; Flags: nowait runasoriginaluser; Check: IsSilentUpdate
+
 [UninstallRun]
 ; 卸载时收拾干净：停进程、删任务、删防火墙规则
 ; 先让服务通过 CDP 关掉它自己拉起的大屏 Chrome —— 不能用 taskkill /IM chrome.exe，
@@ -97,6 +102,39 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Com
 Filename: "netsh"; Parameters: "advfirewall firewall delete rule name=""{#AppName} 控制台"""; Flags: runhidden; RunOnceId: "delrule"
 
 [Code]
+// ---- 在线更新模式 ----
+// 管理器调起参数：/SILENT /SUPPRESSMSGBOXES /NORESTART /CFUPDATE=1 /CFSTARTSERVICE=0|1
+function IsSilentUpdate(): Boolean;
+begin
+  Result := WizardSilent() and (ExpandConstant('{param:CFUPDATE|0}') = '1');
+end;
+
+// 升级前服务在运行才重新拉起，保持升级前后状态一致
+function IsUpdateStartService(): Boolean;
+begin
+  Result := IsSilentUpdate() and (ExpandConstant('{param:CFSTARTSERVICE|1}') = '1');
+end;
+
+// 安装前等管理器自己优雅退出（它会先停服务和大屏 Chrome），超时再强杀兜底，避免文件被占用
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  I, ResultCode: Integer;
+begin
+  Result := '';
+  if not IsSilentUpdate() then Exit;
+
+  I := 0;
+  while CheckForMutexes('CastFlowManager_SingleInstance_Mutex_Global') and (I < 40) do
+  begin
+    Sleep(500);
+    I := I + 1;
+  end;
+
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM CastFlowManager.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM {#AppExe}', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Sleep(1000);
+end;
+
 // 安装前检查 Chrome 与 Edge
 function ChromeFound(): Boolean;
 var
@@ -129,6 +167,8 @@ var
   ErrCode: Integer;
 begin
   Result := True;
+  // 静默安装（含在线更新）不弹任何窗口，避免卡住无人值守的大屏
+  if WizardSilent() then Exit;
   if not ChromeFound() then
   begin
     if EdgeFound() then
@@ -157,7 +197,8 @@ var
   ErrCode: Integer;
 begin
   // 装完自动打开本机设置页 —— 用户不需要知道本机 IP，走 localhost 就行
-  if CurStep = ssPostInstall then
+  // 静默安装（含在线更新）时不打开，避免在大屏上弹出浏览器窗口
+  if (CurStep = ssPostInstall) and not WizardSilent() then
   begin
     Sleep(2500);  // 等服务起来
     ShellExec('open', 'http://127.0.0.1:{#WebPort}/', '', '', SW_SHOWNORMAL, ewNoWait, ErrCode);
