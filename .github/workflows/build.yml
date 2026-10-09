@@ -20,6 +20,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # 发版时从 CHANGELOG.md 提取对应版本说明；缺失则在编译前直接失败，避免漏写更新说明
+      - name: Extract Release Notes from CHANGELOG (On Tag Push)
+        id: notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          ./.github/scripts/extract-release-notes.ps1 -Tag "$env:GITHUB_REF_NAME" -OutFile "$env:RUNNER_TEMP/release-notes.md"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -93,9 +101,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ steps.notes.outputs.title }}
+          body_path: ${{ runner.temp }}/release-notes.md
           files: |
             dist/*Setup*.exe
             dist/CastFlow-Portable.zip
-          generate_release_notes: true
+          generate_release_notes: true # 在 CHANGELOG 说明后追加自动生成的版本对比链接
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

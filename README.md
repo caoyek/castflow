@@ -106,7 +106,7 @@ iscc installer.iss
 
 无需本地配置编译环境：
 - **手动触发**：在 GitHub 仓库 **Actions** -> **Build Windows Installer** 点击 **Run workflow**，自动编译并生成安装包与便携包 Artifacts；
-- **版本发布**：推送 Git Tag（如 `v1.0.3`），云端自动编译并发布 GitHub Release。
+- **版本发布**：先在 [`CHANGELOG.md`](CHANGELOG.md) 顶部新增 `## vX.Y.Z：版本标题` 章节，再推送同名 Git Tag，云端自动编译并发布 GitHub Release，标题与说明取自该章节（缺失时构建失败）。
 
 ---
 
